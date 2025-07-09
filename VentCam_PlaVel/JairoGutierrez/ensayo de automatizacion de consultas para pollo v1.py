@@ -78,20 +78,75 @@ def realizar_acciones_teclado(idnumero):
         pyautogui.hotkey(idnumero)  # Pegar el ID copiado
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
+        
+        # 4. Cambiar a la ventana del SIGT con Alt + Tab
+        keyboard.press('alt')
+        time.sleep(0.1)
+        pyautogui.press('tab')
+        time.sleep(0.1)
+        pyautogui.press('tab')
+        time.sleep(0.1)
+        keyboard.release('alt')
+        
+        # 5. Hacer clic en el panel izquierdo del SIGT que esta en la mitad de la pantalla a lo alto y 200 pixeles desde el borde izquierdo hacia la derecha
+        x_panel_izquierdo = pyautogui.size().width // 2 - 200
+        y_panel_izquierdo = pyautogui.size().height // 2
+        pyautogui.click(x_panel_izquierdo, y_panel_izquierdo)  # Hacer clic en el panel izquierdo
+        
+        # 6. Dar clic en la barra de busqueda que esta en la mitad de la pantalla de ancho, pero unos 200 pixeles hacia abajo, desde la parte superior de la pantalla
+        x_busqueda = pyautogui.size().width // 2
+        y_busqueda = pyautogui.size().height // 2 + 200
+        pyautogui.click(x_busqueda, y_busqueda)  # Hacer clic en la barra de búsqueda
+        
+        # 7. Tocar en el boton de buscar que esta en la misma ubicación que la barra de búsqueda solo que 300 pixeles hacia la derecha
+        x_boton_buscar = x_busqueda + 300
+        y_boton_buscar = y_busqueda
+        pyautogui.click(x_boton_buscar, y_boton_buscar)  # Hacer clic en el botón de buscar
+        
+        # 8. Esperar un poco para que la búsqueda se complete y hacer un clic mantener el clic desde la mitad de toda la pantalla y sin solar el clic arrastrarlo 150 pixeles hacia la derecha, para que selecione el texto que esta desde la mitad de la pantalla hasta 150 pixeles mas hacia la derecha, una vez se recorran los 150 pixeles, manteniendo el clic para seleccionar, se suelta el clic y se copia el texto que se ha seleccionado
+        time.sleep(3)
+        x_medio_pantalla = pyautogui.size().width // 2
+        y_medio_pantalla = pyautogui.size().height // 2
 
-        # 4. Cambiar nuevamente de ventana con Alt + Tab
+        pyautogui.click(x_medio_pantalla, y_medio_pantalla, button='left', duration=0.5)
+        pyautogui.mouseDown()
+        pyautogui.moveRel(150, 0, duration=0.5)
+        pyautogui.mouseUp()
+
+        time.sleep(1)
+
+        pyautogui.hotkey('ctrl', 'c')
+
+        nombre = pyperclip.paste()
+
+
+        # 9. Cambiar a la ventana de block de notas con Alt + Tab
         pyautogui.hotkey('alt', 'tab')
+        
+        # 10. Escribir el nombre del correo copiado
+        pyautogui.write("Nombre: ")
+        pyautogui.hotkey('ctrl', 'v')
+        pyautogui.press('enter')
 
-        # 5. Realizar la acción de Ctrl + L para enfocar la barra de direcciones
+        # 11. Cambiar a la ventana del Outlook con Alt + Tab
+        keyboard.press('alt')
+        time.sleep(0.1)
+        pyautogui.press('tab')
+        time.sleep(0.1)
+        pyautogui.press('tab')
+        time.sleep(0.1)
+        keyboard.release('alt')
+
+        # 12. Realizar la acción de Ctrl + L para enfocar la barra de direcciones
         pyautogui.hotkey('ctrl', 'l')  # Enfocar la barra de direcciones
 
-        # 6. Copiar con Ctrl + C
+        # 13. Copiar con Ctrl + C
         pyautogui.hotkey('ctrl', 'c')  # Copiar
 
-        # 7. Cambiar una vez más con Alt + Tab
+        # 14. Cambiar a la ventada de bloc denotas con Alt + Tab
         pyautogui.hotkey('alt', 'tab')
 
-        # 8. Escribir lo que necesites
+        # 8. Pegar la URL del correoabierto para que el usuario pueda acceder con facilidad
         pyautogui.press('enter')
         pyautogui.write("URL del correo:")
         pyautogui.hotkey('ctrl', 'v')
