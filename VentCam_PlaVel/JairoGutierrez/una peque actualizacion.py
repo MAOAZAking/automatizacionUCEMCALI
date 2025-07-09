@@ -127,18 +127,26 @@ def realizar_acciones_teclado(idnumero):
         pyautogui.write("Nombre: ")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
-        
 
-        # 9. Realizar la acción de Ctrl + L para enfocar la barra de direcciones
+        # 11. Cambiar a la ventana del Outlook con Alt + Tab
+        keyboard.press('alt')
+        time.sleep(0.1)
+        pyautogui.press('tab')
+        time.sleep(0.1)
+        pyautogui.press('tab')
+        time.sleep(0.1)
+        keyboard.release('alt')
+
+        # 12. Realizar la acción de Ctrl + L para enfocar la barra de direcciones
         pyautogui.hotkey('ctrl', 'l')  # Enfocar la barra de direcciones
 
-        # 6. Copiar con Ctrl + C
+        # 13. Copiar con Ctrl + C
         pyautogui.hotkey('ctrl', 'c')  # Copiar
 
-        # 7. Cambiar una vez más con Alt + Tab
+        # 14. Cambiar a la ventada de bloc denotas con Alt + Tab
         pyautogui.hotkey('alt', 'tab')
 
-        # 8. Escribir lo que necesites
+        # 8. Pegar la URL del correoabierto para que el usuario pueda acceder con facilidad
         pyautogui.press('enter')
         pyautogui.write("URL del correo:")
         pyautogui.hotkey('ctrl', 'v')
