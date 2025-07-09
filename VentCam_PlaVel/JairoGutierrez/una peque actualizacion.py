@@ -90,13 +90,23 @@ def realizar_acciones_teclado(idnumero):
         
         # 5. Hacer clic en el panel izquierdo del SIGT que esta en la mitad de la pantalla a lo alto y 200 pixeles desde el borde izquierdo hacia la derecha
         x_panel_izquierdo = pyautogui.size().width // 2 - 200
-        y_panel_izquierdo = pyautogui.size().height // 2
+        y_panel_izquierdo = pyautogui.size().height // 2 - 350
         pyautogui.click(x_panel_izquierdo, y_panel_izquierdo)  # Hacer clic en el panel izquierdo
         
-        # 6. Dar clic en la barra de busqueda que esta en la mitad de la pantalla de ancho, pero unos 200 pixeles hacia abajo, desde la parte superior de la pantalla
+        # 6. Dar clic para desplegar con que va a buscar (para selecionar contrato)
         x_busqueda = pyautogui.size().width // 2
-        y_busqueda = pyautogui.size().height // 2 + 200
-        pyautogui.click(x_busqueda, y_busqueda)  # Hacer clic en la barra de búsqueda
+        y_busqueda = pyautogui.size().height // 2 + 300
+        pyautogui.click(x_busqueda, y_busqueda)  # Hacer clic para mostrar menú
+
+        # 7. Dar clic para selecionar la opcion deseada en el menu que se desplego
+        x_busqueda = pyautogui.size().width // 2
+        y_busqueda = pyautogui.size().height // 2 + 400
+        pyautogui.click(x_busqueda, y_busqueda)  # Hacer clic en la opcion deseada
+
+        # 7. Dar clic en la barra de busqueda y pegar el id
+        x_busqueda = pyautogui.size().width // 2 + 400
+        y_busqueda = pyautogui.size().height // 2 + 300
+        pyautogui.click(x_busqueda, y_busqueda)  # Hacer clic en la opcion deseada
         
         # 7. Tocar en el boton de buscar que esta en la misma ubicación que la barra de búsqueda solo que 300 pixeles hacia la derecha
         x_boton_buscar = x_busqueda + 300
