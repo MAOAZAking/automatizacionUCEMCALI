@@ -88,7 +88,7 @@ def realizar_acciones_teclado(idnumero):
         time.sleep(0.1)
         keyboard.release('alt')
         
-        # 5. Hacer clic en el panel izquierdo del SIGT que esta en la mitad de la pantalla a lo alto y 200 pixeles desde el borde izquierdo hacia la derecha
+        # 5. Hacer clic en el panel izquierdo del SIGT sobre *CONSULTAR CONTRATO* que esta en la mitad de la pantalla a lo alto y 200 pixeles desde el borde izquierdo hacia la derecha
         x_panel_izquierdo = pyautogui.size().width // 2 - 200
         y_panel_izquierdo = pyautogui.size().height // 2 - 350
         pyautogui.click(x_panel_izquierdo, y_panel_izquierdo)  # Hacer clic en el panel izquierdo
@@ -103,42 +103,162 @@ def realizar_acciones_teclado(idnumero):
         y_busqueda = pyautogui.size().height // 2 + 400
         pyautogui.click(x_busqueda, y_busqueda)  # Hacer clic en la opcion deseada
 
-        # 7. Dar clic en la barra de busqueda y pegar el id
+        # 8. Dar clic en la barra de busqueda y pegar el id
         x_busqueda = pyautogui.size().width // 2 + 400
         y_busqueda = pyautogui.size().height // 2 + 300
-        pyautogui.click(x_busqueda, y_busqueda)  # Hacer clic en la opcion deseada
+        pyautogui.click(x_busqueda, y_busqueda)  # Deja el cursor sobre la barra de búsqueda
+        pyautogui.hotkey('ctrl', 'v')  # Pegar el ID copiado
         
-        # 7. Tocar en el boton de buscar que esta en la misma ubicación que la barra de búsqueda solo que 300 pixeles hacia la derecha
-        x_boton_buscar = x_busqueda + 300
+        # 9. Tocar en el boton de buscar
+        x_boton_buscar = x_busqueda + 600
         y_boton_buscar = y_busqueda
         pyautogui.click(x_boton_buscar, y_boton_buscar)  # Hacer clic en el botón de buscar
         
-        # 8. Esperar un poco para que la búsqueda se complete y hacer un clic mantener el clic desde la mitad de toda la pantalla y sin solar el clic arrastrarlo 150 pixeles hacia la derecha, para que selecione el texto que esta desde la mitad de la pantalla hasta 150 pixeles mas hacia la derecha, una vez se recorran los 150 pixeles, manteniendo el clic para seleccionar, se suelta el clic y se copia el texto que se ha seleccionado
+        # 10. Esperar un poco para que la búsqueda se complete y seleccionar el nombre
         time.sleep(3)
-        x_medio_pantalla = pyautogui.size().width // 2
+        x_medio_pantalla = pyautogui.size().width // 2 + 150
+        y_medio_pantalla = pyautogui.size().height // 2 + 200
+
+        pyautogui.click(x_medio_pantalla, y_medio_pantalla, button='left', duration=0.5)
+        pyautogui.mouseDown()
+        pyautogui.moveRel(250, 0, duration=0.5)
+        pyautogui.mouseUp()
+
+        time.sleep(0.6)
+
+        pyautogui.hotkey('ctrl', 'c')
+
+        nombre_contacto = pyperclip.paste()
+
+
+        # 11. Cambiar a la ventana de block de notas con Alt + Tab
+        pyautogui.hotkey('alt', 'tab')
+        
+        # 12. Escribir el nombre del usuario
+        pyautogui.write("Nombre: ")
+        pyautogui.hotkey('ctrl', 'v')
+        pyautogui.press('enter')
+        
+         # 13. Cambiar a la ventana de SIGT con Alt + Tab
+        pyautogui.hotkey('alt', 'tab')
+        
+        # 14. Seleccionar el número de contacto del usuario
+        x_medio_pantalla = pyautogui.size().width // 2 + 400
         y_medio_pantalla = pyautogui.size().height // 2
 
         pyautogui.click(x_medio_pantalla, y_medio_pantalla, button='left', duration=0.5)
         pyautogui.mouseDown()
-        pyautogui.moveRel(150, 0, duration=0.5)
+        pyautogui.moveRel(250, 0, duration=0.5)
         pyautogui.mouseUp()
 
-        time.sleep(1)
+        time.sleep(0.6)
 
         pyautogui.hotkey('ctrl', 'c')
 
-        nombre = pyperclip.paste()
+        numero_contacto = pyperclip.paste()
+        
+        # Hacer la conversion de número telefonico a número celular
+        numero_contacto_sin_espacios = numero_contacto.replace(" ", "")
+        cantidad_caracteres = len(numero_contacto_sin_espacios)
+
+        if cantidad_caracteres == 7:
+            numero_contacto = "602" + numero_contacto_sin_espacios
+
+        print("Número de contacto:", numero_contacto)
+        
+        
+        pyperclip.copy(numero_contacto) #Copia el nuevo número de contacto al portapapeles
 
 
-        # 9. Cambiar a la ventana de block de notas con Alt + Tab
+        # 15. Cambiar a la ventana de block de notas con Alt + Tab
         pyautogui.hotkey('alt', 'tab')
         
-        # 10. Escribir el nombre del correo copiado
-        pyautogui.write("Nombre: ")
+        # 16. Escribir el nombre del correo copiado
+        pyautogui.write("Número de contacto: ")
+        pyautogui.hotkey('ctrl', 'v')
+        pyautogui.press('enter')
+        
+        # 17. Cambiar a la ventana de SIGT con Alt + Tab
+        pyautogui.hotkey('alt', 'tab')
+        
+        # 18. Seleccionar el email del usuario
+        x_medio_pantalla = pyautogui.size().width // 2 + 150
+        y_medio_pantalla = pyautogui.size().height // 2 + 200
+
+        pyautogui.click(x_medio_pantalla, y_medio_pantalla, button='left', duration=0.5)
+        pyautogui.mouseDown()
+        pyautogui.moveRel(250, 0, duration=0.5)
+        pyautogui.mouseUp()
+
+        time.sleep(0.6)
+
+        pyautogui.hotkey('ctrl', 'c')
+
+        email_contacto = pyperclip.paste()
+
+        # 19. Cambiar a la ventana de block de notas con Alt + Tab
+        pyautogui.hotkey('alt', 'tab')
+        
+        # 20. Escribir el nombre del correo copiado
+        pyautogui.write("Email de contacto: ")
+        pyautogui.hotkey('ctrl', 'v')
+        pyautogui.press('enter')
+        
+        # 21. Cambiar a la ventana de SIGT con Alt + Tab
+        pyautogui.hotkey('alt', 'tab')
+        
+        # 22. Seleccionar el tipo de usuario
+        x_medio_pantalla = pyautogui.size().width // 2 + 150
+        y_medio_pantalla = pyautogui.size().height // 2 - 200
+
+        pyautogui.click(x_medio_pantalla, y_medio_pantalla, button='left', duration=0.5)
+        pyautogui.mouseDown()
+        pyautogui.moveRel(250, 0, duration=0.5)
+        pyautogui.mouseUp()
+
+        time.sleep(0.6)
+
+        pyautogui.hotkey('ctrl', 'c')
+
+        tipo_usuario = pyperclip.paste()
+
+
+        # 23. Cambiar a la ventana de block de notas con Alt + Tab
+        pyautogui.hotkey('alt', 'tab')
+        
+        # 24. Escribir el tipo de cliente copiado
+        pyautogui.write("Tipo de cliente: ")
+        pyautogui.hotkey('ctrl', 'v')
+        pyautogui.press('enter')
+        
+        # 25. Cambiar a la ventana de SIGT con Alt + Tab
+        pyautogui.hotkey('alt', 'tab')
+        
+        # 26. Seleccionar el plan del usuario
+        x_medio_pantalla = pyautogui.size().width // 2 + 400
+        y_medio_pantalla = pyautogui.size().height // 2 + 100
+
+        pyautogui.click(x_medio_pantalla, y_medio_pantalla, button='left', duration=0.5)
+        pyautogui.mouseDown()
+        pyautogui.moveRel(250, 50, duration=0.5)
+        pyautogui.mouseUp()
+
+        time.sleep(0.6)
+
+        pyautogui.hotkey('ctrl', 'c')
+
+        tipo_usuario = pyperclip.paste()
+
+
+        # 27. Cambiar a la ventana de block de notas con Alt + Tab
+        pyautogui.hotkey('alt', 'tab')
+        
+        # 28. Escribir el plan copiado
+        pyautogui.write("Plan del cliente: ")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
 
-        # 11. Cambiar a la ventana del Outlook con Alt + Tab
+        # 29. Cambiar a la ventana del Outlook con Alt + Tab
         keyboard.press('alt')
         time.sleep(0.1)
         pyautogui.press('tab')
@@ -147,16 +267,16 @@ def realizar_acciones_teclado(idnumero):
         time.sleep(0.1)
         keyboard.release('alt')
 
-        # 12. Realizar la acción de Ctrl + L para enfocar la barra de direcciones
+        # 30. Realizar la acción de Ctrl + L para enfocar la barra de direcciones
         pyautogui.hotkey('ctrl', 'l')  # Enfocar la barra de direcciones
 
-        # 13. Copiar con Ctrl + C
+        # 31. Copiar con Ctrl + C
         pyautogui.hotkey('ctrl', 'c')  # Copiar
 
-        # 14. Cambiar a la ventada de bloc denotas con Alt + Tab
+        # 32. Cambiar a la ventada de bloc denotas con Alt + Tab
         pyautogui.hotkey('alt', 'tab')
 
-        # 8. Pegar la URL del correoabierto para que el usuario pueda acceder con facilidad
+        # 33. Pegar la URL del correoabierto para que el usuario pueda acceder con facilidad
         pyautogui.press('enter')
         pyautogui.write("URL del correo:")
         pyautogui.hotkey('ctrl', 'v')
