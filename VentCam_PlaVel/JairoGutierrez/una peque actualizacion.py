@@ -173,7 +173,7 @@ def realizar_acciones_teclado(idnumero):
         # 15. Cambiar a la ventana de block de notas con Alt + Tab
         pyautogui.hotkey('alt', 'tab')
         
-        # 16. Escribir el nombre del correo copiado
+        # 16. Escribir el número de contacto copiado
         pyautogui.write("Número de contacto: ")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
@@ -199,7 +199,7 @@ def realizar_acciones_teclado(idnumero):
         # 19. Cambiar a la ventana de block de notas con Alt + Tab
         pyautogui.hotkey('alt', 'tab')
         
-        # 20. Escribir el nombre del correo copiado
+        # 20. Escribir el correo electronico del cliente copiado
         pyautogui.write("Email de contacto: ")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
@@ -247,7 +247,7 @@ def realizar_acciones_teclado(idnumero):
 
         pyautogui.hotkey('ctrl', 'c')
 
-        tipo_usuario = pyperclip.paste()
+        plan_usuario = pyperclip.paste()
 
 
         # 27. Cambiar a la ventana de block de notas con Alt + Tab
