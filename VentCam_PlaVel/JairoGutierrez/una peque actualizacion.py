@@ -4,6 +4,9 @@ import time
 import keyboard
 import re
 
+#definir variable existe_id
+existe_id = 0
+
 def asegurar_foco_ventana():
     try:
         # Asegurarnos de que la ventana de Python esté en foco
@@ -281,6 +284,16 @@ def realizar_acciones_teclado(idnumero):
         pyautogui.write("URL del correo:")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
+        
+        # 34. Dar clic en el boton de mover correo
+        x_boton_buscar = x_busqueda - 60
+        y_boton_buscar = y_busqueda -100
+        pyautogui.click(x_boton_buscar, y_boton_buscar)
+        
+        # 34. Dar clic en la carpeta a la que se movera el correo
+        x_boton_buscar = x_busqueda - 60
+        y_boton_buscar = y_busqueda -100
+        pyautogui.click(x_boton_buscar, y_boton_buscar)
 
         print("Acciones de teclado realizadas.")
     except Exception as e:
