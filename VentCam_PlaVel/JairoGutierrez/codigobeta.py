@@ -2,16 +2,11 @@ import pyautogui
 import pyperclip
 import time
 import re
-import ctypes  # Para la ventana emergente de advertencia
+import ctypes
 import cv2
 import numpy as np
 from PIL import ImageGrab
 import sys
-
-# Evito uso de keyboard para evitar dependencias problemáticas
-# Usaré sólo pyautogui.hotkey para combinaciones de teclas
-
-# Variables globales eliminadas para evitar confusión; manejo idnumero localmente
 
 def asegurar_foco_ventana():
     try:
@@ -28,7 +23,7 @@ def asegurar_foco_ventana():
 def copiar_texto_del_correo():
     try:
         pyautogui.hotkey('ctrl', 'a')
-        time.sleep(0.5)  # Reducido tiempo de espera (mejora 6)
+        time.sleep(0.5)
         pyautogui.hotkey('ctrl', 'c')
         time.sleep(0.5)
         texto = pyperclip.paste()
@@ -64,8 +59,7 @@ def mostrar_alerta_y_terminar():
     ctypes.windll.user32.MessageBoxW(0, "ATENCIÓN: El correo actual no tiene ID\nSe requiere atención inmediata de un usuario", "¡Advertencia!", 0)
     sys.exit()
 
-# Mejora 2 y 3: Captura pantalla una vez y búsqueda con reintentos y escalado dinámico para robustez y velocidad
-def hacer_clic_en_imagen(nombre_imagen, descripcion="", espera=2, pantalla=None, reintentos=3):
+def hacer_clic_en_imagen(nombre_imagen, descripcion="", espera=2, pantalla=None, reintentos=3, porcentaje_inicio_x=0.5):
     imagen_objetivo = cv2.imread(nombre_imagen, cv2.IMREAD_UNCHANGED)
     if imagen_objetivo is None:
         raise FileNotFoundError(f"No se pudo cargar la imagen {nombre_imagen}")
@@ -104,10 +98,10 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", espera=2, pantalla=None,
             x, y = mejor_ubicacion
             ancho = int(imagen_objetivo.shape[1] * mejor_escala)
             alto = int(imagen_objetivo.shape[0] * mejor_escala)
-            centro_x = x + ancho // 2
-            centro_y = y + alto // 2
-            print(f"{descripcion} encontrado en {centro_x, centro_y} con escala {mejor_escala:.2f} (confianza {mejor_valor:.2f})")
-            pyautogui.click(centro_x, centro_y)
+            clic_x = int(x + ancho * porcentaje_inicio_x)
+            clic_y = y + alto // 2
+            print(f"{descripcion} encontrado en {clic_x, clic_y} con escala {mejor_escala:.2f} (confianza {mejor_valor:.2f})")
+            pyautogui.click(clic_x, clic_y)
             time.sleep(espera)
             return True
         else:
@@ -116,86 +110,15 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", espera=2, pantalla=None,
 
     raise Exception(f"No se pudo encontrar la imagen {nombre_imagen} en pantalla después de {reintentos} intentos.")
 
-# Mejora 7 y 8: Mejorar cálculo de posición evitando siempre relativo al centro absoluto, usa ventana activa si posible
-def obtener_posicion_relativa(offset_x, offset_y):
-    try:
-        ventana_activa = pyautogui.getActiveWindow()
-        if ventana_activa:
-            base_x = ventana_activa.left
-            base_y = ventana_activa.top
-            ancho_ventana = ventana_activa.width
-            alto_ventana = ventana_activa.height
-            pos_x = base_x + ancho_ventana // 2 + offset_x
-            pos_y = base_y + alto_ventana // 2 + offset_y
-            return pos_x, pos_y
-    except Exception:
-        pass
-    pos_x = pyautogui.size().width // 2 + offset_x
-    pos_y = pyautogui.size().height // 2 + offset_y
-    return pos_x, pos_y
-
-# Mejora 5 y 8: Unifico combinaciones de teclas con pyautogui, evito keyboard
 def presionar_alt_tab_veces(veces=1):
     for _ in range(veces):
         pyautogui.hotkey('alt', 'tab')
         time.sleep(0.5)
 
-def realizar_acciones_teclado(idtexto):
-    try:
-        presionar_alt_tab_veces()
-
-        pyautogui.write("***************************************")
-        pyautogui.press('enter')
-
-        pyautogui.write("ID: ")
-        pyautogui.hotkey('ctrl', 'v')
-        pyautogui.press('enter')
-
-        presionar_alt_tab_veces(2)
-
-        hacer_clic_en_imagen("imagenes/consultas.png", "Panel Consultar Contrato")
-        hacer_clic_en_imagen("imagenes/formabuscar.png", "Desplegar forma de búsqueda")
-        hacer_clic_en_imagen("imagenes/seleccionarcontrato.png", "Seleccionar opción Contrato")
-        hacer_clic_en_imagen("imagenes/valor.png", "Campo de Valor del contrato")
-        pyautogui.hotkey('ctrl', 'v')
-        time.sleep(2)
-
-        hacer_clic_en_imagen("imagenes/buscar.png", "Botón Buscar")
-        time.sleep(3)
-
-        # Datos desde etiquetas con imagen
-        extraer_dato_desde_etiqueta("Nombre", "imagenes/nombre.png")
-        extraer_dato_desde_etiqueta("Número de contacto", "imagenes/numero_contacto.png", convertir=True)
-        extraer_dato_desde_etiqueta("Email de contacto", "imagenes/email.png")
-        extraer_dato_desde_etiqueta("Tipo de cliente", "imagenes/tipo_cliente.png")
-
-        # Plan desde tabla
-        extraer_plan_desde_tabla()
-
-        presionar_alt_tab_veces(2)
-        pyautogui.hotkey('ctrl', 'l')
-        pyautogui.hotkey('ctrl', 'c')
-
-        presionar_alt_tab_veces()
-        pyautogui.press('enter')
-        pyautogui.write("URL del correo:")
-        pyautogui.hotkey('ctrl', 'v')
-        pyautogui.press('enter')
-
-        hacer_clic_en_imagen("imagenes/movera.png", "Botón Mover Correo")
-        hacer_clic_en_imagen("imagenes/seleccionarcarpeta.png", "Carpeta destino")
-
-        print("Acciones completadas.")
-
-    except Exception as e:
-        print(f"Error al realizar acciones de teclado: {e}")
-
-# NUEVAS FUNCIONES PARA DETECCIÓN BASADA EN ETIQUETAS
-
 def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=250, desplazamiento_y=0, convertir=False):
     try:
         pantalla = ImageGrab.grab()
-        encontrado = hacer_clic_en_imagen(imagen_etiqueta, f"Etiqueta {etiqueta}", pantalla=pantalla)
+        encontrado = hacer_clic_en_imagen(imagen_etiqueta, f"Etiqueta {etiqueta}", pantalla=pantalla, porcentaje_inicio_x=0.05)
 
         if not encontrado:
             print(f"No se encontró la etiqueta {etiqueta}")
@@ -218,7 +141,6 @@ def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=250,
             pyperclip.copy(valor)
 
         pyautogui.hotkey('alt', 'tab')
-        pyautogui.write(f"{etiqueta}: ")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
         pyautogui.hotkey('alt', 'tab')
@@ -232,7 +154,7 @@ def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=250,
 def extraer_plan_desde_tabla():
     try:
         pantalla = ImageGrab.grab()
-        encontrado = hacer_clic_en_imagen("imagenes/informacion_contrato.png", "Tabla Información del contrato", pantalla=pantalla)
+        encontrado = hacer_clic_en_imagen("imagenes/informacion_contrato.png", "Tabla Información del contrato", pantalla=pantalla, porcentaje_inicio_x=0.05)
 
         if not encontrado:
             print("No se encontró la tabla Información del contrato")
@@ -249,7 +171,6 @@ def extraer_plan_desde_tabla():
         plan = pyperclip.paste()
 
         pyautogui.hotkey('alt', 'tab')
-        pyautogui.write("Plan del cliente: ")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
         pyautogui.hotkey('alt', 'tab')
@@ -259,3 +180,95 @@ def extraer_plan_desde_tabla():
     except Exception as e:
         print(f"Error al extraer el plan: {e}")
         return None
+
+def realizar_acciones_teclado(idtexto):
+    try:
+        presionar_alt_tab_veces()
+        pyautogui.write("***************************************")
+        pyautogui.press('enter')
+        pyautogui.write("ID: ")
+        pyautogui.hotkey('ctrl', 'v')
+        pyautogui.press('enter')
+
+        presionar_alt_tab_veces(2)
+
+        hacer_clic_en_imagen("imagenes/consultas.png", "Panel Consultar Contrato")
+        hacer_clic_en_imagen("imagenes/formabuscar.png", "Desplegar forma de búsqueda")
+        hacer_clic_en_imagen("imagenes/seleccionarcontrato.png", "Seleccionar opción Contrato")
+        hacer_clic_en_imagen("imagenes/valor.png", "Campo de Valor del contrato")
+        pyautogui.hotkey('ctrl', 'v')
+        time.sleep(2)
+
+        hacer_clic_en_imagen("imagenes/buscar.png", "Botón Buscar")
+        time.sleep(3)
+
+        extraer_dato_desde_etiqueta("Nombre", "imagenes/nombre.png")
+        extraer_dato_desde_etiqueta("Número de contacto", "imagenes/numero_contacto.png", convertir=True)
+        extraer_dato_desde_etiqueta("Email de contacto", "imagenes/email.png")
+        extraer_dato_desde_etiqueta("Tipo de cliente", "imagenes/tipo_cliente.png")
+        extraer_plan_desde_tabla()
+
+        presionar_alt_tab_veces(2)
+        pyautogui.hotkey('ctrl', 'l')
+        pyautogui.hotkey('ctrl', 'c')
+
+        presionar_alt_tab_veces()
+        pyautogui.press('enter')
+        pyautogui.write("URL del correo:")
+        pyautogui.hotkey('ctrl', 'v')
+        pyautogui.press('enter')
+
+        hacer_clic_en_imagen("imagenes/movera.png", "Botón Mover Correo")
+        hacer_clic_en_imagen("imagenes/seleccionarcarpeta.png", "Carpeta destino")
+
+        print("Acciones completadas.")
+    except Exception as e:
+        print(f"Error al realizar acciones de teclado: {e}")
+
+def main():
+    asegurar_foco_ventana()
+    print("Esperando 7 segundos para preparar el entorno...")
+    time.sleep(7)
+
+    intentos_max = 5
+    intentos = 0
+    idnumero = 0
+
+    while intentos < intentos_max:
+        intentos += 1
+        print(f"Intento #{intentos} para procesar correo...")
+
+        x = pyautogui.size().width // 2 - 479
+        y = pyautogui.size().height // 2 - 207
+        pyautogui.click(x, y)
+        time.sleep(2)
+
+        x = pyautogui.size().width // 2 + 139
+        y = pyautogui.size().height // 2 - 27
+        pyautogui.click(x, y)
+        time.sleep(2)
+
+        texto = copiar_texto_del_correo()
+
+        if texto:
+            id_encontrado = buscar_id_en_texto(texto)
+            if id_encontrado:
+                idnumero = id_encontrado
+                copiar_id_a_portapapeles(idnumero)
+                realizar_acciones_teclado(idnumero)
+                break
+            else:
+                idnumero = 0
+        else:
+            idnumero = 0
+
+        if idnumero == 0:
+            print("ID no encontrado, mostrando alerta.")
+            mostrar_alerta_y_terminar()
+
+    if intentos >= intentos_max:
+        print(f"No se pudo procesar el correo después de {intentos_max} intentos.")
+        mostrar_alerta_y_terminar()
+
+if __name__ == "__main__":
+    main()
