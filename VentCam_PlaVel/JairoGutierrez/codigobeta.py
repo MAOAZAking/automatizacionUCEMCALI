@@ -265,6 +265,7 @@ def realizar_acciones_teclado(idtexto):
         pyautogui.press('enter')
 
         hacer_clic_en_imagen("imagenes/movera.png", "Botón Mover Correo")
+        hacer_clic_en_imagen("imagenes/mostrartodaslascarpetas.png", "Mostrar todas las carpetas")
         hacer_clic_en_imagen("imagenes/seleccionarcarpeta.png", "Carpeta destino")
 
         log("Acciones completadas.")
