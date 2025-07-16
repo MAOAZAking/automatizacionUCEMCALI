@@ -7,18 +7,46 @@ import cv2
 import numpy as np
 from PIL import ImageGrab
 import sys
+import pygetwindow as gw  # Para manejar ventanas por título
 
-def asegurar_foco_ventana():
+def log(msg):
+    print(f"[LOG] {msg}")
+
+def asegurar_foco_ventana(titulo_parcial="Python"):
+    """
+    Busca y activa ventana cuyo título contenga titulo_parcial.
+    """
     try:
-        print("Asegurando que la ventana de Python esté en foco...")
-        ventana_python = pyautogui.getWindowsWithTitle("Python")
-        if ventana_python:
-            ventana_python[0].activate()
+        log(f"Intentando enfocar ventana con título que contenga '{titulo_parcial}'...")
+        ventanas = [v for v in gw.getAllWindows() if titulo_parcial.lower() in v.title.lower()]
+        if ventanas:
+            ventana = ventanas[0]
+            ventana.activate()
             time.sleep(1)
+            log(f"Ventana '{ventana.title}' activada.")
+            return True
         else:
-            print("Ventana Python no encontrada.")
+            log(f"No se encontró ventana con título que contenga '{titulo_parcial}'.")
+            return False
     except Exception as e:
-        print(f"Error al asegurar el foco de la ventana: {e}")
+        log(f"Error al enfocar ventana: {e}")
+        return False
+
+def validar_imagenes(lista_imagenes):
+    """
+    Valida que todas las imágenes existan y puedan abrirse.
+    """
+    faltantes = []
+    for img in lista_imagenes:
+        try:
+            if cv2.imread(img) is None:
+                faltantes.append(img)
+        except Exception:
+            faltantes.append(img)
+    if faltantes:
+        log(f"ERROR: Las siguientes imágenes no se pudieron cargar: {faltantes}")
+        return False
+    return True
 
 def copiar_texto_del_correo():
     try:
@@ -27,36 +55,39 @@ def copiar_texto_del_correo():
         pyautogui.hotkey('ctrl', 'c')
         time.sleep(0.5)
         texto = pyperclip.paste()
-        if texto:
-            print("Texto copiado del correo:", texto)
-        return texto
+        if texto.strip():
+            log(f"Texto copiado del correo: {texto[:50]}...")  # Muestra solo primeros 50 chars
+            return texto
+        else:
+            log("Texto copiado está vacío.")
+            return None
     except Exception as e:
-        print(f"Error al copiar el texto del correo: {e}")
+        log(f"Error al copiar el texto del correo: {e}")
         return None
 
 def buscar_id_en_texto(texto):
     try:
-        match = re.search(r'idnumero\s?(\d+)', texto)
+        match = re.search(r'idnumero\s?(\d+)', texto, re.IGNORECASE)
         if match:
             id_encontrado = match.group(1)
-            print(f"ID encontrado: {id_encontrado}")
+            log(f"ID encontrado: {id_encontrado}")
             return id_encontrado
         else:
-            print("No se encontró un ID válido en el texto")
+            log("No se encontró un ID válido en el texto")
             return None
     except Exception as e:
-        print(f"Error al buscar el ID en el texto: {e}")
+        log(f"Error al buscar el ID en el texto: {e}")
         return None
 
 def copiar_id_a_portapapeles(idtexto):
     try:
         pyperclip.copy(idtexto)
-        print("ID copiado al portapapeles.")
+        log("ID copiado al portapapeles.")
     except Exception as e:
-        print(f"Error al copiar al portapapeles: {e}")
+        log(f"Error al copiar al portapapeles: {e}")
 
-def mostrar_alerta_y_terminar():
-    ctypes.windll.user32.MessageBoxW(0, "ATENCIÓN: El correo actual no tiene ID\nSe requiere atención inmediata de un usuario", "¡Advertencia!", 0)
+def mostrar_alerta_y_terminar(mensaje="ATENCIÓN: El correo actual no tiene ID\nSe requiere atención inmediata de un usuario"):
+    ctypes.windll.user32.MessageBoxW(0, mensaje, "¡Advertencia!", 0)
     sys.exit()
 
 def hacer_clic_en_imagen(nombre_imagen, descripcion="", espera=2, pantalla=None, reintentos=3, porcentaje_inicio_x=0.5):
@@ -65,7 +96,7 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", espera=2, pantalla=None,
         raise FileNotFoundError(f"No se pudo cargar la imagen {nombre_imagen}")
 
     for intento in range(reintentos):
-        print(f"Buscando '{descripcion}', intento {intento+1}/{reintentos}...")
+        log(f"Buscando '{descripcion}', intento {intento+1}/{reintentos}...")
 
         if pantalla is None:
             pantalla = ImageGrab.grab()
@@ -100,12 +131,12 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", espera=2, pantalla=None,
             alto = int(imagen_objetivo.shape[0] * mejor_escala)
             clic_x = int(x + ancho * porcentaje_inicio_x)
             clic_y = y + alto // 2
-            print(f"{descripcion} encontrado en {clic_x, clic_y} con escala {mejor_escala:.2f} (confianza {mejor_valor:.2f})")
+            log(f"{descripcion} encontrado en {clic_x, clic_y} con escala {mejor_escala:.2f} (confianza {mejor_valor:.2f})")
             pyautogui.click(clic_x, clic_y)
             time.sleep(espera)
             return True
         else:
-            print(f"No se encontró {descripcion} en intento {intento+1}. Esperando y reintentando...")
+            log(f"No se encontró {descripcion} en intento {intento+1}. Esperando y reintentando...")
             time.sleep(1)
 
     raise Exception(f"No se pudo encontrar la imagen {nombre_imagen} en pantalla después de {reintentos} intentos.")
@@ -121,7 +152,7 @@ def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=250,
         encontrado = hacer_clic_en_imagen(imagen_etiqueta, f"Etiqueta {etiqueta}", pantalla=pantalla, porcentaje_inicio_x=0.05)
 
         if not encontrado:
-            print(f"No se encontró la etiqueta {etiqueta}")
+            log(f"No se encontró la etiqueta {etiqueta}")
             return None
 
         pyautogui.moveRel(desplazamiento_x, desplazamiento_y, duration=0.3)
@@ -140,15 +171,18 @@ def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=250,
                 valor = "602" + valor
             pyperclip.copy(valor)
 
+        # Pegamos TODO el texto copiado (etiqueta + info) sin escribir la etiqueta manual
         pyautogui.hotkey('alt', 'tab')
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
         pyautogui.hotkey('alt', 'tab')
 
+        log(f"{etiqueta} extraído y pegado: {valor.strip()[:40]}...")  # Log parcial
+
         return valor
 
     except Exception as e:
-        print(f"Error al extraer {etiqueta}: {e}")
+        log(f"Error al extraer {etiqueta}: {e}")
         return None
 
 def extraer_plan_desde_tabla():
@@ -157,7 +191,7 @@ def extraer_plan_desde_tabla():
         encontrado = hacer_clic_en_imagen("imagenes/informacion_contrato.png", "Tabla Información del contrato", pantalla=pantalla, porcentaje_inicio_x=0.05)
 
         if not encontrado:
-            print("No se encontró la tabla Información del contrato")
+            log("No se encontró la tabla Información del contrato")
             return None
 
         pyautogui.moveRel(200, 60, duration=0.3)
@@ -175,11 +209,23 @@ def extraer_plan_desde_tabla():
         pyautogui.press('enter')
         pyautogui.hotkey('alt', 'tab')
 
+        log(f"Plan extraído y pegado: {plan.strip()[:40]}...")
+
         return plan
 
     except Exception as e:
-        print(f"Error al extraer el plan: {e}")
+        log(f"Error al extraer el plan: {e}")
         return None
+
+def limpiar_estado_o_cerrar():
+    """
+    Función para cerrar ventana o limpiar estado si error crítico.
+    (Implementar según contexto)
+    """
+    log("Limpiando estado o cerrando ventana por error crítico.")
+    # Ejemplo simple: presionar ESC para cerrar popups
+    pyautogui.press('esc')
+    time.sleep(1)
 
 def realizar_acciones_teclado(idtexto):
     try:
@@ -221,13 +267,33 @@ def realizar_acciones_teclado(idtexto):
         hacer_clic_en_imagen("imagenes/movera.png", "Botón Mover Correo")
         hacer_clic_en_imagen("imagenes/seleccionarcarpeta.png", "Carpeta destino")
 
-        print("Acciones completadas.")
+        log("Acciones completadas.")
     except Exception as e:
-        print(f"Error al realizar acciones de teclado: {e}")
+        log(f"Error al realizar acciones de teclado: {e}")
+        limpiar_estado_o_cerrar()
 
 def main():
-    asegurar_foco_ventana()
-    print("Esperando 7 segundos para preparar el entorno...")
+    if not validar_imagenes([
+        "imagenes/consultas.png",
+        "imagenes/formabuscar.png",
+        "imagenes/seleccionarcontrato.png",
+        "imagenes/valor.png",
+        "imagenes/buscar.png",
+        "imagenes/nombre.png",
+        "imagenes/email.png",
+        "imagenes/numero_contacto.png",
+        "imagenes/tipo_cliente.png",
+        "imagenes/informacion_contrato.png",
+        "imagenes/movera.png",
+        "imagenes/seleccionarcarpeta.png"
+    ]):
+        mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
+
+    enfocado = asegurar_foco_ventana("Python")
+    if not enfocado:
+        log("No se pudo enfocar la ventana Python, continuando de todas formas...")
+
+    log("Esperando 7 segundos para preparar el entorno...")
     time.sleep(7)
 
     intentos_max = 5
@@ -236,7 +302,7 @@ def main():
 
     while intentos < intentos_max:
         intentos += 1
-        print(f"Intento #{intentos} para procesar correo...")
+        log(f"Intento #{intentos} para procesar correo...")
 
         x = pyautogui.size().width // 2 - 479
         y = pyautogui.size().height // 2 - 207
@@ -263,11 +329,11 @@ def main():
             idnumero = 0
 
         if idnumero == 0:
-            print("ID no encontrado, mostrando alerta.")
+            log("ID no encontrado, mostrando alerta.")
             mostrar_alerta_y_terminar()
 
     if intentos >= intentos_max:
-        print(f"No se pudo procesar el correo después de {intentos_max} intentos.")
+        log(f"No se pudo procesar el correo después de {intentos_max} intentos.")
         mostrar_alerta_y_terminar()
 
 if __name__ == "__main__":
