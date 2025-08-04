@@ -239,15 +239,17 @@ def realizar_acciones_teclado(idtexto):
         presionar_alt_tab_veces(2)
 
         hacer_clic_en_imagen("imagenes/consultas.png", "Panel Consultar Contrato")
-        hacer_clic_en_imagen("imagenes/formabuscar.png", "Desplegar forma de búsqueda")
-        hacer_clic_en_imagen("imagenes/seleccionarcontrato.png", "Seleccionar opción Contrato")
+        hacer_clic_en_imagen("imagenes/forma_buscar.png", "Desplegar forma de búsqueda")
+        hacer_clic_en_imagen("imagenes/seleccionar_contrato.png", "Seleccionar opción Contrato")
         hacer_clic_en_imagen("imagenes/valor.png", "Campo de Valor del contrato")
         pyautogui.hotkey('ctrl', 'v')
-        time.sleep(2)
 
         hacer_clic_en_imagen("imagenes/buscar.png", "Botón Buscar")
-        time.sleep(3)
+        time.sleep(2)
 
+        #   Seleccionar contrato activo
+        hacer_clic_en_imagen("imagenes/seleccionar_contrato_activo.png", "Seleccionar el Contrato que este activo")
+        
         extraer_dato_desde_etiqueta("Nombre", "imagenes/nombre.png")
         extraer_dato_desde_etiqueta("Número de contacto", "imagenes/numero_contacto.png", convertir=True)
         extraer_dato_desde_etiqueta("Email de contacto", "imagenes/email.png")
@@ -264,9 +266,9 @@ def realizar_acciones_teclado(idtexto):
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
 
-        hacer_clic_en_imagen("imagenes/movera.png", "Botón Mover Correo")
-        hacer_clic_en_imagen("imagenes/mostrartodaslascarpetas.png", "Mostrar todas las carpetas")
-        hacer_clic_en_imagen("imagenes/seleccionarcarpeta.png", "Carpeta destino")
+        hacer_clic_en_imagen("imagenes/mover_a.png", "Botón Mover Correo")
+        hacer_clic_en_imagen("imagenes/mostrar_todas_las_carpetas.png", "Mostrar todas las carpetas")
+        hacer_clic_en_imagen("imagenes/seleccionar_carpeta.png", "Carpeta destino")
 
         log("Acciones completadas.")
     except Exception as e:
@@ -276,8 +278,9 @@ def realizar_acciones_teclado(idtexto):
 def main():
     if not validar_imagenes([
         "imagenes/consultas.png",
-        "imagenes/formabuscar.png",
-        "imagenes/seleccionarcontrato.png",
+        "imagenes/forma_buscar.png",
+        "imagenes/seleccionar_contrato.png",
+        "imagenes/seleccionar_contrato_activo.png"
         "imagenes/valor.png",
         "imagenes/buscar.png",
         "imagenes/nombre.png",
@@ -285,8 +288,9 @@ def main():
         "imagenes/numero_contacto.png",
         "imagenes/tipo_cliente.png",
         "imagenes/informacion_contrato.png",
-        "imagenes/movera.png",
-        "imagenes/seleccionarcarpeta.png"
+        "imagenes/mover_a.png",
+        "imagenes/mostrar_todas_las_carpetas.png"
+        "imagenes/seleccionar_carpeta.png"
     ]):
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
