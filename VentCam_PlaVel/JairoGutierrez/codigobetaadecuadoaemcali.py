@@ -29,8 +29,8 @@ def asegurar_foco_ventana(titulo_parcial="Correo: "):
             log(f"No se encontró ventana con título que contenga '{titulo_parcial}'.")
             return False
     except Exception as e:
-        log(f"Error al enfocar ventana: {e}")
-        return False
+        limpiar_estado_o_cerrar(f"Error al enfocar la ventana del correo OUTLOOK, puede que no este abierto o este en otro escritorio: {e}")
+
 
 def validar_imagenes(lista_imagenes):
     """
@@ -62,8 +62,7 @@ def copiar_texto_del_correo():
             log("Texto copiado está vacío.")
             return None
     except Exception as e:
-        log(f"Error al copiar el texto del correo: {e}")
-        return None
+        limpiar_estado_o_cerrar(f"Error al copiar el contendio del correo para buscar su NÚMERO DE CONTRATO: {e}")
 
 def buscar_id_en_texto(texto):
     try:
@@ -76,17 +75,17 @@ def buscar_id_en_texto(texto):
             log("No se encontró un númeor de contrato válido en el texto")
             return None
     except Exception as e:
-        log(f"Error al buscar el número de contrato en el texto: {e}")
-        return None
+        limpiar_estado_o_cerrar(f"Error al buscar su NÚMERO DE CONTRATO, puede que este correo no diga exactamente NÚMERO DE CONTRATO: {e}")
 
 def copiar_id_a_portapapeles(idtexto):
     try:
         pyperclip.copy(idtexto)
         log("Número de contrato copiado al portapapeles.")
     except Exception as e:
-        log(f"Error al copiar al portapapeles: {e}")
+        limpiar_estado_o_cerrar(f"Error al copiar el número de contrato al portapapeles, para buscar la informacion en el SIGT: {e}")
 
 def mostrar_alerta_y_terminar(mensaje="ATENCIÓN: El correo actual no tiene ID\nSe requiere atención inmediata de un usuario"):
+    import ctypes, sys
     ctypes.windll.user32.MessageBoxW(0, mensaje, "¡Advertencia!", 0)
     sys.exit()
 
@@ -182,6 +181,7 @@ def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=250,
         return valor
 
     except Exception as e:
+        limpiar_estado_o_cerrar(f"Error al copiar el número de contrato al portapapeles, para buscar la informacion en el SIGT: {e}")
         log(f"Error al extraer {etiqueta}: {e}")
         return None
 
@@ -214,18 +214,12 @@ def extraer_plan_desde_tabla():
         return plan
 
     except Exception as e:
-        log(f"Error al extraer el plan: {e}")
-        return None
+        limpiar_estado_o_cerrar(f"Error al extraer el plan del cliente: {e}")
 
-def limpiar_estado_o_cerrar():
-    """
-    Función para cerrar ventana o limpiar estado si error crítico.
-    (Implementar según contexto)
-    """
-    log("Limpiando estado o cerrando ventana por error crítico.")
-    # Ejemplo simple: presionar ESC para cerrar popups
-    pyautogui.press('esc')
-    time.sleep(1)
+def limpiar_estado_o_cerrar(mensaje_error="Se produjo un error crítico. El proceso ha sido detenido."):
+    log(f"Error crítico: {mensaje_error}")
+    mostrar_alerta_y_terminar(mensaje_error)
+
 
 def realizar_acciones_teclado(idtexto):
     try:
@@ -238,16 +232,18 @@ def realizar_acciones_teclado(idtexto):
 
         presionar_alt_tab_veces(2)
 
-        hacer_clic_en_imagen("imagenes/consultas.png", "Panel Consultar numerocontrato")
-        hacer_clic_en_imagen("imagenes/formabuscar.png", "Desplegar forma de búsqueda")
-        hacer_clic_en_imagen("imagenes/seleccionarnumerocontrato.png", "Seleccionar opción numerocontrato")
-        hacer_clic_en_imagen("imagenes/valor.png", "Campo de Valor del numerocontrato")
+        hacer_clic_en_imagen("imagenes/consultas.png", "Panel Consultar Contrato")
+        hacer_clic_en_imagen("imagenes/forma_buscar.png", "Desplegar forma de búsqueda")
+        hacer_clic_en_imagen("imagenes/seleccionar_contrato.png", "Seleccionar opción Contrato")
+        hacer_clic_en_imagen("imagenes/valor.png", "Campo de Valor del contrato")
         pyautogui.hotkey('ctrl', 'v')
-        time.sleep(2)
 
         hacer_clic_en_imagen("imagenes/buscar.png", "Botón Buscar")
-        time.sleep(3)
+        time.sleep(2)
 
+        #   Seleccionar contrato activo
+        hacer_clic_en_imagen("imagenes/seleccionar_contrato_activo.png", "Seleccionar el Contrato que este activo")
+        
         extraer_dato_desde_etiqueta("Nombre", "imagenes/nombre.png")
         extraer_dato_desde_etiqueta("Número de contacto", "imagenes/numero_contacto.png", convertir=True)
         extraer_dato_desde_etiqueta("Email de contacto", "imagenes/email.png")
@@ -264,29 +260,30 @@ def realizar_acciones_teclado(idtexto):
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
 
-        hacer_clic_en_imagen("imagenes/movera.png", "Botón Mover Correo")
-        hacer_clic_en_imagen("imagenes/mostrartodaslascarpetas.png", "Mostrar todas las carpetas")
-        hacer_clic_en_imagen("imagenes/seleccionarcarpeta.png", "Carpeta destino")
+        hacer_clic_en_imagen("imagenes/mover_a.png", "Botón Mover Correo")
+        hacer_clic_en_imagen("imagenes/mostrar_todas_las_carpetas.png", "Mostrar todas las carpetas")
+        hacer_clic_en_imagen("imagenes/seleccionar_carpeta.png", "Carpeta destino")
 
         log("Acciones completadas.")
     except Exception as e:
-        log(f"Error al realizar acciones de teclado: {e}")
-        limpiar_estado_o_cerrar()
+        limpiar_estado_o_cerrar(f"Error en realizar_acciones_teclado(): {e}")
 
 def main():
     if not validar_imagenes([
         "imagenes/consultas.png",
-        "imagenes/formabuscar.png",
-        "imagenes/seleccionarnumerocontrato.png",
+        "imagenes/forma_buscar.png",
+        "imagenes/seleccionar_contrato.png",
+        "imagenes/seleccionar_contrato_activo.png"
         "imagenes/valor.png",
         "imagenes/buscar.png",
         "imagenes/nombre.png",
         "imagenes/email.png",
         "imagenes/numero_contacto.png",
         "imagenes/tipo_cliente.png",
-        "imagenes/informacion_numerocontrato.png",
-        "imagenes/movera.png",
-        "imagenes/seleccionarcarpeta.png"
+        "imagenes/informacion_contrato.png",
+        "imagenes/mover_a.png",
+        "imagenes/mostrar_todas_las_carpetas.png"
+        "imagenes/seleccionar_carpeta.png"
     ]):
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
@@ -330,7 +327,7 @@ def main():
             numerocontrato = 0
 
         if numerocontrato == 0:
-            log("ID no encontrado, mostrando alerta.")
+            log("NÚMERO DE CONTRATO no encontrado, mostrando alerta.")
             mostrar_alerta_y_terminar()
 
     if intentos >= intentos_max:
