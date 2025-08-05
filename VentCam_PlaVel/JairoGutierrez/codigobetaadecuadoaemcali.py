@@ -66,7 +66,28 @@ def copiar_texto_del_correo():
 
 def buscar_id_en_texto(texto):
     try:
-        match = re.search(r'numerocontrato\s?(\d+)', texto, re.IGNORECASE)
+        # Convertir a minúsculas para evitar problemas con mayúsculas o tildes
+        texto = texto.lower()
+
+        # Lista de patrones flexibles para identificar el número de contrato
+        patron = (
+            r'(?:'                        # Grupo no capturante para las variantes
+                r'n[úu]?m(?:ero)?\.?\s*'   # Variaciones de número: num, núm, número, núm. etc.
+                r'(?:de\s*)?'              # Opcionalmente "de"
+                r'contrato|'               # seguido de "contrato"
+                r'contrato|'               # o solo la palabra "contrato"
+                r'n°|'                     # símbolo N°
+                r'#|'                      # símbolo #
+                r'nro\.?|'                 # abreviatura nro, nro.
+                r'nº'                      # símbolo Nº
+                r'no
+                r'no.
+                r'no:
+                r'no...
+            r')\s*(\d{4,})'                # Captura un número de al menos 3 dígitos (ajustable)
+        )
+
+        match = re.search(patron, texto)
         if match:
             id_encontrado = match.group(1)
             log(f"ID encontrado: {id_encontrado}")
@@ -188,10 +209,10 @@ def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=250,
 def extraer_plan_desde_tabla():
     try:
         pantalla = ImageGrab.grab()
-        encontrado = hacer_clic_en_imagen("imagenes/informacion_numerocontrato.png", "Tabla Información del numerocontrato", pantalla=pantalla, porcentaje_inicio_x=0.05)
+        encontrado = hacer_clic_en_imagen("imagenes/informacion_contrato.png", "Tabla Información del contrato (Plan)", pantalla=pantalla, porcentaje_inicio_x=0.05)
 
         if not encontrado:
-            log("No se encontró la tabla Información del numerocontrato")
+            log("No se encontró la tabla Información del contrato")
             return None
 
         pyautogui.moveRel(200, 60, duration=0.3)
