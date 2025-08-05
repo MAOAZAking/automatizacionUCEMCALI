@@ -248,6 +248,7 @@ def realizar_acciones_teclado(idtexto):
         pyautogui.write("***************************************")
         pyautogui.press('enter')
         pyautogui.write("Número de contrato: ")
+        pyperclip.copy(idtexto)
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
 
@@ -308,9 +309,9 @@ def main():
     ]):
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
-    enfocado = asegurar_foco_ventana("Python")
+    enfocado = asegurar_foco_ventana("Bloc de notas")
     if not enfocado:
-        log("No se pudo enfocar la ventana Python, continuando de todas formas...")
+        log("No se pudo enfocar la ventana de Bloc de notas, continuando de todas formas...")
 
     log("Esperando 7 segundos para preparar el entorno...")
     time.sleep(7)
@@ -338,7 +339,7 @@ def main():
         if texto:
             id_encontrado = buscar_id_en_texto(texto)
             if id_encontrado:
-                c0ontrato = id_encontrado
+                numerocontrato = id_encontrado
                 copiar_id_a_portapapeles(numerocontrato)
                 realizar_acciones_teclado(numerocontrato)
                 break
