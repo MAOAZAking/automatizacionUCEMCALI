@@ -80,10 +80,10 @@ def buscar_id_en_texto(texto):
                 r'#|'                      # símbolo #
                 r'nro\.?|'                 # abreviatura nro, nro.
                 r'nº'                      # símbolo Nº
-                r'no
-                r'no.
-                r'no:
-                r'no...
+                r'no'
+                r'no.'
+                r'no:'
+                r'no...'
             r')\s*(\d{4,})'                # Captura un número de al menos 3 dígitos (ajustable)
         )
 
