@@ -373,7 +373,7 @@ def main():
         "imagenes/consultas.png",
         "imagenes/forma_buscar.png",
         "imagenes/seleccionar_contrato.png",
-        "imagenes/seleccionar_contrato_activo.png"
+        "imagenes/seleccionar_contrato_activo.png",
         "imagenes/valor.png",
         "imagenes/buscar.png",
         "imagenes/nombre.png",
@@ -382,12 +382,12 @@ def main():
         "imagenes/tipo_cliente.png",
         "imagenes/informacion_contrato.png",
         "imagenes/mover_a.png",
-        "imagenes/mostrar_todas_las_carpetas.png"
+        "imagenes/mostrar_todas_las_carpetas.png",
         "imagenes/seleccionar_carpeta.png"
     ]):
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
-    enfocado = asegurar_foco_ventana("Bloc de notas")
+    enfocado = asegurar_foco_ventana("Gestion ADSL")
     if not enfocado:
         log("No se pudo enfocar la ventana de Bloc de notas, continuando de todas formas...")
 
@@ -402,8 +402,8 @@ def main():
         intentos += 1
         log(f"Intento #{intentos} para procesar correo...")
 
-        x = pyautogui.size().width // 2 - 479
-        y = pyautogui.size().height // 2 - 207
+        x = pyautogui.size().width // 2 - 439
+        y = pyautogui.size().height // 2 - 107
         pyautogui.click(x, y)
         time.sleep(2)
 
