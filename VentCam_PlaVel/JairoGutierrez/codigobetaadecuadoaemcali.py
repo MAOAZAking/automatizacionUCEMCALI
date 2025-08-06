@@ -226,16 +226,16 @@ def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=75, 
 def extraer_plan_desde_tabla():
     try:
         pantalla = ImageGrab.grab()
-        encontrado = hacer_clic_en_imagen("imagenes/informacion_contrato.png", "Tabla Información del contrato (Plan)", pantalla=pantalla, porcentaje_inicio_x=0.05)
+        encontrado = hacer_clic_en_imagen("imagenes/informacion_contrato.png", "Plan")
 
         if not encontrado:
             log("No se encontró la tabla Información del contrato")
             return None
 
-        pyautogui.moveRel(100, 30, duration=0.3)
+        pyautogui.moveRel(100, 0, duration=0.3)
         pyautogui.click()
         pyautogui.mouseDown()
-        pyautogui.moveRel(100, 0, duration=0.3)
+        pyautogui.moveRel(100, 30, duration=0.3)
         pyautogui.mouseUp()
         time.sleep(0.5)
 
@@ -243,9 +243,9 @@ def extraer_plan_desde_tabla():
         plan = pyperclip.paste()
 
         presionar_alt_tab_veces(1)
+        pyautogui.write("Plan : ")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
-        presionar_alt_tab_veces(1)
 
         log(f"Plan extraído y pegado: {plan.strip()[:40]}...")
 
@@ -262,7 +262,8 @@ def limpiar_estado_o_cerrar(mensaje_error="Se produjo un error crítico. El proc
 def realizar_acciones_teclado(idtexto):
     try:
         presionar_alt_tab_veces(2)
-        pyautogui.write("***************************************")
+        pyautogui.press('enter')
+        pyautogui.write("******************************************************************************")
         pyautogui.press('enter')
         pyautogui.write("Número de contrato: ")
         pyperclip.copy(idtexto)
@@ -298,6 +299,8 @@ def realizar_acciones_teclado(idtexto):
         pyautogui.write("URL del correo:")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
+        pyautogui.press('enter')
+        presionar_alt_tab_veces(1)
 
         hacer_clic_en_imagen("imagenes/mover_a.png", "Botón Mover Correo")
         hacer_clic_en_imagen("imagenes/mostrar_todas_las_carpetas.png", "Mostrar todas las carpetas")
