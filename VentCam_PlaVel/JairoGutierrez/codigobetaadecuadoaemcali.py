@@ -161,6 +161,84 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", espera=2, pantalla=None,
 
     raise Exception(f"No se pudo encontrar la imagen {nombre_imagen} en pantalla después de {reintentos} intentos.")
 
+def hacer_clic_en_imagen_ignorando_primera(nombre_imagen, descripcion="", espera=2, pantalla=None, reintentos=3, porcentaje_inicio_x=0.5):
+    imagen_objetivo = cv2.imread(nombre_imagen, cv2.IMREAD_UNCHANGED)
+    if imagen_objetivo is None:
+        raise FileNotFoundError(f"No se pudo cargar la imagen {nombre_imagen}")
+
+    primer_ubicacion = None
+    mejor_valor_definitivo = 0
+    mejor_ubicacion_definitiva = None
+    mejor_escala_definitiva = 1.0
+
+    for intento in range(reintentos):
+        log(f"[{descripcion}] Búsqueda #{intento + 1} ignorando primera coincidencia...")
+
+        if pantalla is None:
+            pantalla = ImageGrab.grab()
+        pantalla_cv = cv2.cvtColor(np.array(pantalla), cv2.COLOR_RGB2BGR)
+
+        escalas = np.linspace(0.9, 1.1, 11)
+        mejor_valor = 0
+        mejor_ubicacion = None
+        mejor_escala = 1.0
+
+        for escala in escalas:
+            ancho = int(imagen_objetivo.shape[1] * escala)
+            alto = int(imagen_objetivo.shape[0] * escala)
+            if ancho < 10 or alto < 10:
+                continue
+            imagen_redimensionada = cv2.resize(imagen_objetivo, (ancho, alto), interpolation=cv2.INTER_AREA)
+
+            res = cv2.matchTemplate(pantalla_cv, imagen_redimensionada, cv2.TM_CCOEFF_NORMED)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+
+            if max_val > mejor_valor:
+                mejor_valor = max_val
+                mejor_ubicacion = max_loc
+                mejor_escala = escala
+
+            if mejor_valor >= 0.75:
+                break
+
+        if mejor_valor >= 0.75 and mejor_ubicacion:
+            # Si es el primer intento, guardamos la posición para omitirla en los siguientes
+            if intento == 0:
+                primer_ubicacion = mejor_ubicacion
+                log(f"[{descripcion}] Primer coincidencia encontrada en {primer_ubicacion}, se omitirá inicialmente.")
+                time.sleep(1)
+                continue
+            else:
+                # Comparamos ubicación actual con la primera
+                if mejor_ubicacion != primer_ubicacion:
+                    mejor_ubicacion_definitiva = mejor_ubicacion
+                    mejor_valor_definitivo = mejor_valor
+                    mejor_escala_definitiva = mejor_escala
+                    break
+
+        time.sleep(1)
+
+    # Si no se encontró una segunda coincidencia diferente, usar la primera
+    if mejor_ubicacion_definitiva is None and primer_ubicacion is not None:
+        log(f"[{descripcion}] No se encontró una coincidencia diferente. Usando la primera encontrada.")
+        mejor_ubicacion_definitiva = primer_ubicacion
+        mejor_escala_definitiva = 1.0  # asumimos sin cambio de escala
+        mejor_valor_definitivo = mejor_valor
+
+    if mejor_ubicacion_definitiva:
+        x, y = mejor_ubicacion_definitiva
+        ancho = int(imagen_objetivo.shape[1] * mejor_escala_definitiva)
+        alto = int(imagen_objetivo.shape[0] * mejor_escala_definitiva)
+        clic_x = int(x + ancho * porcentaje_inicio_x)
+        clic_y = y + alto // 2
+        log(f"{descripcion} encontrado en {clic_x, clic_y} con escala {mejor_escala_definitiva:.2f} (confianza {mejor_valor_definitivo:.2f})")
+        pyautogui.click(clic_x, clic_y)
+        time.sleep(espera)
+        return True
+
+    raise Exception(f"No se pudo encontrar la imagen {nombre_imagen} en pantalla tras {reintentos} intentos.")
+
+
 def presionar_alt_tab_veces(veces=1):
     for _ in range(veces):
         pyautogui.hotkey('alt', 'tab')
@@ -169,7 +247,7 @@ def presionar_alt_tab_veces(veces=1):
 def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=250, desplazamiento_y=0, convertir=False):
     try:
         pantalla = ImageGrab.grab()
-        encontrado = hacer_clic_en_imagen(imagen_etiqueta, f"Etiqueta {etiqueta}", pantalla=pantalla, porcentaje_inicio_x=0.05)
+        encontrado = hacer_clic_en_imagen_ignorando_primera(imagen_etiqueta, f"Etiqueta {etiqueta}", pantalla=pantalla, porcentaje_inicio_x=0.05)
 
         if not encontrado:
             log(f"No se encontró la etiqueta {etiqueta}")
