@@ -9,6 +9,13 @@ from PIL import ImageGrab
 import sys
 import pygetwindow as gw  # Para manejar ventanas por título
 
+# Configuraciones globales
+pyautogui.PAUSE = 0.1
+pyautogui.FAILSAFE = False
+
+ESCALAS_POSIBLES = np.linspace(0.5, 1.5, num=11)
+TOLERANCIA_DETECTADA = 0.75
+
 def log(msg):
     print(f"[LOG] {msg}")
 
@@ -110,134 +117,85 @@ def mostrar_alerta_y_terminar(mensaje="ATENCIÓN: El correo actual no tiene ID\n
     ctypes.windll.user32.MessageBoxW(0, mensaje, "¡Advertencia!", 0)
     sys.exit()
 
-def hacer_clic_en_imagen(nombre_imagen, descripcion="", espera=2, pantalla=None, reintentos=3, porcentaje_inicio_x=0.5):
-    imagen_objetivo = cv2.imread(nombre_imagen, cv2.IMREAD_UNCHANGED)
-    if imagen_objetivo is None:
-        raise FileNotFoundError(f"No se pudo cargar la imagen {nombre_imagen}")
+def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=5, region=None, multiple=False):
+    """
+    Busca una imagen en pantalla con diferentes escalas y hace clic en ella si la encuentra.
+    Soporta diferentes resoluciones, escalados y proporciones.
+    """
+    print(f"[🧠] Buscando: {descripcion} → Imagen: {nombre_imagen}")
 
-    for intento in range(reintentos):
-        log(f"Buscando '{descripcion}', intento {intento+1}/{reintentos}...")
+    # Carga la imagen base en escala de grises
+    template = cv2.imread(nombre_imagen, cv2.IMREAD_GRAYSCALE)
+    if template is None:
+        print(f"[❌] No se pudo cargar la imagen {nombre_imagen}")
+        return None
 
-        if pantalla is None:
-            pantalla = ImageGrab.grab()
-        pantalla_cv = cv2.cvtColor(np.array(pantalla), cv2.COLOR_RGB2BGR)
+    h_template, w_template = template.shape
 
-        escalas = np.linspace(0.9, 1.1, 11)
-        mejor_valor = 0
-        mejor_ubicacion = None
-        mejor_escala = 1.0
+    tiempo_inicio = time.time()
+    escalas = np.linspace(0.6, 1.4, num=20)  # Escalas desde 60% a 140%
 
+    while time.time() - tiempo_inicio < tiempo_espera:
+        captura = pyautogui.screenshot(region=region)
+        captura = cv2.cvtColor(np.array(captura), cv2.COLOR_RGB2GRAY)
+
+        mejores_puntos = []
         for escala in escalas:
-            ancho = int(imagen_objetivo.shape[1] * escala)
-            alto = int(imagen_objetivo.shape[0] * escala)
-            if ancho < 10 or alto < 10:
+            resized_template = cv2.resize(template, (0, 0), fx=escala, fy=escala)
+            h, w = resized_template.shape
+
+            if captura.shape[0] < h or captura.shape[1] < w:
                 continue
-            imagen_redimensionada = cv2.resize(imagen_objetivo, (ancho, alto), interpolation=cv2.INTER_AREA)
 
-            res = cv2.matchTemplate(pantalla_cv, imagen_redimensionada, cv2.TM_CCOEFF_NORMED)
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+            resultado = cv2.matchTemplate(captura, resized_template, cv2.TM_CCOEFF_NORMED)
+            umbral = 0.7
+            ubicaciones = np.where(resultado >= umbral)
 
-            if max_val > mejor_valor:
-                mejor_valor = max_val
-                mejor_ubicacion = max_loc
-                mejor_escala = escala
+            for pt in zip(*ubicaciones[::-1]):
+                mejores_puntos.append((pt[0] + w // 2, pt[1] + h // 2, resultado[pt[1], pt[0]]))
 
-            if mejor_valor >= 0.75:
-                break
+        if mejores_puntos:
+            mejores_puntos.sort(key=lambda x: x[2], reverse=True)
 
-        if mejor_valor >= 0.75 and mejor_ubicacion:
-            x, y = mejor_ubicacion
-            ancho = int(imagen_objetivo.shape[1] * mejor_escala)
-            alto = int(imagen_objetivo.shape[0] * mejor_escala)
-            clic_x = int(x + ancho * porcentaje_inicio_x)
-            clic_y = y + alto // 2
-            log(f"{descripcion} encontrado en {clic_x, clic_y} con escala {mejor_escala:.2f} (confianza {mejor_valor:.2f})")
-            pyautogui.click(clic_x, clic_y)
-            time.sleep(espera)
-            return True
-        else:
-            log(f"No se encontró {descripcion} en intento {intento+1}. Esperando y reintentando...")
-            time.sleep(1)
+            if multiple:
+                return mejores_puntos  # Devolver todas las coincidencias
 
-    raise Exception(f"No se pudo encontrar la imagen {nombre_imagen} en pantalla después de {reintentos} intentos.")
+            # Solo una coincidencia: hacer clic
+            mejor_pt = mejores_puntos[0]
+            abs_x, abs_y = mejor_pt[0], mejor_pt[1]
+            print(f"[✅] Coincidencia encontrada en ({abs_x}, {abs_y}) con confianza: {mejor_pt[2]:.2f}")
+            pyautogui.moveTo(abs_x, abs_y, duration=0.2)
+            pyautogui.click()
+            return (abs_x, abs_y)
 
-def hacer_clic_en_imagen_ignorando_primera(nombre_imagen, descripcion="", espera=2, pantalla=None, reintentos=3, porcentaje_inicio_x=0.5):
-    imagen_objetivo = cv2.imread(nombre_imagen, cv2.IMREAD_UNCHANGED)
-    if imagen_objetivo is None:
-        raise FileNotFoundError(f"No se pudo cargar la imagen {nombre_imagen}")
+        time.sleep(0.3)
 
-    primer_ubicacion = None
-    mejor_valor_definitivo = 0
-    mejor_ubicacion_definitiva = None
-    mejor_escala_definitiva = 1.0
+    print(f"[⚠️] No se encontró la imagen: {nombre_imagen}")
+    return None
 
-    for intento in range(reintentos):
-        log(f"[{descripcion}] Búsqueda #{intento + 1} ignorando primera coincidencia...")
 
-        if pantalla is None:
-            pantalla = ImageGrab.grab()
-        pantalla_cv = cv2.cvtColor(np.array(pantalla), cv2.COLOR_RGB2BGR)
+def hacer_clic_en_imagen_ignorando_primera(nombre_imagen, descripcion="", tiempo_espera=5):
+    """
+    Busca una imagen, ignora la primera coincidencia (más cercana arriba/izquierda),
+    y hace clic en la segunda coincidencia si existe.
+    """
+    print(f"[🧠] Buscando (ignorando 1ra): {descripcion} → Imagen: {nombre_imagen}")
+    puntos = hacer_clic_en_imagen(nombre_imagen, descripcion, tiempo_espera, multiple=True)
 
-        escalas = np.linspace(0.9, 1.1, 11)
-        mejor_valor = 0
-        mejor_ubicacion = None
-        mejor_escala = 1.0
-
-        for escala in escalas:
-            ancho = int(imagen_objetivo.shape[1] * escala)
-            alto = int(imagen_objetivo.shape[0] * escala)
-            if ancho < 10 or alto < 10:
-                continue
-            imagen_redimensionada = cv2.resize(imagen_objetivo, (ancho, alto), interpolation=cv2.INTER_AREA)
-
-            res = cv2.matchTemplate(pantalla_cv, imagen_redimensionada, cv2.TM_CCOEFF_NORMED)
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-
-            if max_val > mejor_valor:
-                mejor_valor = max_val
-                mejor_ubicacion = max_loc
-                mejor_escala = escala
-
-            if mejor_valor >= 0.75:
-                break
-
-        if mejor_valor >= 0.75 and mejor_ubicacion:
-            # Si es el primer intento, guardamos la posición para omitirla en los siguientes
-            if intento == 0:
-                primer_ubicacion = mejor_ubicacion
-                log(f"[{descripcion}] Primer coincidencia encontrada en {primer_ubicacion}, se omitirá inicialmente.")
-                time.sleep(1)
-                continue
-            else:
-                # Comparamos ubicación actual con la primera
-                if mejor_ubicacion != primer_ubicacion:
-                    mejor_ubicacion_definitiva = mejor_ubicacion
-                    mejor_valor_definitivo = mejor_valor
-                    mejor_escala_definitiva = mejor_escala
-                    break
-
-        time.sleep(1)
-
-    # Si no se encontró una segunda coincidencia diferente, usar la primera
-    if mejor_ubicacion_definitiva is None and primer_ubicacion is not None:
-        log(f"[{descripcion}] No se encontró una coincidencia diferente. Usando la primera encontrada.")
-        mejor_ubicacion_definitiva = primer_ubicacion
-        mejor_escala_definitiva = 1.0  # asumimos sin cambio de escala
-        mejor_valor_definitivo = mejor_valor
-
-    if mejor_ubicacion_definitiva:
-        x, y = mejor_ubicacion_definitiva
-        ancho = int(imagen_objetivo.shape[1] * mejor_escala_definitiva)
-        alto = int(imagen_objetivo.shape[0] * mejor_escala_definitiva)
-        clic_x = int(x + ancho * porcentaje_inicio_x)
-        clic_y = y + alto // 2
-        log(f"{descripcion} encontrado en {clic_x, clic_y} con escala {mejor_escala_definitiva:.2f} (confianza {mejor_valor_definitivo:.2f})")
-        pyautogui.click(clic_x, clic_y)
-        time.sleep(espera)
-        return True
-
-    raise Exception(f"No se pudo encontrar la imagen {nombre_imagen} en pantalla tras {reintentos} intentos.")
-
+    if puntos and len(puntos) > 1:
+        segundo = puntos[1]
+        pyautogui.moveTo(segundo[0], segundo[1], duration=0.2)
+        pyautogui.click()
+        print(f"[✅] Se hizo clic en la segunda coincidencia.")
+        return (segundo[0], segundo[1])
+    elif puntos:
+        print("[⚠️] Solo se encontró una coincidencia. Se hace clic en esa.")
+        pyautogui.moveTo(puntos[0][0], puntos[0][1], duration=0.2)
+        pyautogui.click()
+        return (puntos[0][0], puntos[0][1])
+    else:
+        print("[❌] No se encontró ninguna coincidencia.")
+        return None
 
 def presionar_alt_tab_veces(veces=1):
     for _ in range(veces):
@@ -247,7 +205,7 @@ def presionar_alt_tab_veces(veces=1):
 def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=250, desplazamiento_y=0, convertir=False):
     try:
         pantalla = ImageGrab.grab()
-        encontrado = hacer_clic_en_imagen_ignorando_primera(imagen_etiqueta, f"Etiqueta {etiqueta}", pantalla=pantalla, porcentaje_inicio_x=0.05)
+        encontrado = hacer_clic_en_imagen_ignorando_primera(imagen_etiqueta, f"Etiqueta {etiqueta}")
 
         if not encontrado:
             log(f"No se encontró la etiqueta {etiqueta}")
