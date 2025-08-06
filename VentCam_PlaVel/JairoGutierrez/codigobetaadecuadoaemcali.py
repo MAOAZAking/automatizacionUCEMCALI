@@ -19,25 +19,6 @@ TOLERANCIA_DETECTADA = 0.75
 def log(msg):
     print(f"[LOG] {msg}")
 
-def asegurar_foco_ventana(titulo_parcial="Correo: "):
-    """
-    Busca y activa ventana cuyo título contenga titulo_parcial.
-    """
-    try:
-        log(f"Intentando enfocar ventana con título que contenga '{titulo_parcial}'...")
-        ventanas = [v for v in gw.getAllWindows() if titulo_parcial.lower() in v.title.lower()]
-        if ventanas:
-            ventana = ventanas[0]
-            ventana.activate()
-            time.sleep(1)
-            log(f"Ventana '{ventana.title}' activada.")
-            return True
-        else:
-            log(f"No se encontró ventana con título que contenga '{titulo_parcial}'.")
-            return False
-    except Exception as e:
-        limpiar_estado_o_cerrar(f"Error al enfocar la ventana del correo OUTLOOK, puede que no este abierto o este en otro escritorio: {e}")
-
 
 def validar_imagenes(lista_imagenes):
     """
@@ -58,9 +39,7 @@ def validar_imagenes(lista_imagenes):
 def copiar_texto_del_correo():
     try:
         pyautogui.hotkey('ctrl', 'a')
-        time.sleep(0.5)
         pyautogui.hotkey('ctrl', 'c')
-        time.sleep(0.5)
         texto = pyperclip.paste()
         if texto.strip():
             log(f"Texto copiado del correo: {texto[:50]}...")  # Muestra solo primeros 50 chars
@@ -117,7 +96,7 @@ def mostrar_alerta_y_terminar(mensaje="ATENCIÓN: El correo actual no tiene ID\n
     ctypes.windll.user32.MessageBoxW(0, mensaje, "¡Advertencia!", 0)
     sys.exit()
 
-def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=5, region=None, multiple=False):
+def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=3, region=None, multiple=False):
     """
     Busca una imagen en pantalla con diferentes escalas y hace clic en ella si la encuentra.
     Soporta diferentes resoluciones, escalados y proporciones.
@@ -168,13 +147,12 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=5, region=
             pyautogui.click()
             return (abs_x, abs_y)
 
-        time.sleep(0.3)
 
     print(f"[⚠️] No se encontró la imagen: {nombre_imagen}")
     return None
 
 
-def hacer_clic_en_imagen_ignorando_primera(nombre_imagen, descripcion="", tiempo_espera=5):
+def hacer_clic_en_imagen_ignorando_primera(nombre_imagen, descripcion="", tiempo_espera=3):
     """
     Busca una imagen, ignora la primera coincidencia (más cercana arriba/izquierda),
     y hace clic en la segunda coincidencia si existe.
@@ -198,11 +176,13 @@ def hacer_clic_en_imagen_ignorando_primera(nombre_imagen, descripcion="", tiempo
         return None
 
 def presionar_alt_tab_veces(veces=1):
+    pyautogui.keyDown('alt')  # Mantiene presionado Alt
     for _ in range(veces):
-        pyautogui.hotkey('alt', 'tab')
-        time.sleep(0.5)
+        pyautogui.press('tab')  # Pulsa Tab sin soltar Alt
+    pyautogui.keyUp('alt')     # Suelta Alt
 
-def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=250, desplazamiento_y=0, convertir=False):
+
+def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=75, desplazamiento_y=0, convertir=False):
     try:
         pantalla = ImageGrab.grab()
         encontrado = hacer_clic_en_imagen_ignorando_primera(imagen_etiqueta, f"Etiqueta {etiqueta}")
@@ -214,7 +194,7 @@ def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=250,
         pyautogui.moveRel(desplazamiento_x, desplazamiento_y, duration=0.3)
         pyautogui.click()
         pyautogui.mouseDown()
-        pyautogui.moveRel(200, 0, duration=0.3)
+        pyautogui.moveRel(150, 0, duration=0.3)
         pyautogui.mouseUp()
         time.sleep(0.5)
 
@@ -228,10 +208,11 @@ def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=250,
             pyperclip.copy(valor)
 
         # Pegamos TODO el texto copiado (etiqueta + info) sin escribir la etiqueta manual
-        pyautogui.hotkey('alt', 'tab')
+        presionar_alt_tab_veces(1)  # Cambiar al Bloc de notas
+        pyautogui.write(f"{etiqueta} : ")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
-        pyautogui.hotkey('alt', 'tab')
+        presionar_alt_tab_veces(1)
 
         log(f"{etiqueta} extraído y pegado: {valor.strip()[:40]}...")  # Log parcial
 
@@ -251,20 +232,20 @@ def extraer_plan_desde_tabla():
             log("No se encontró la tabla Información del contrato")
             return None
 
-        pyautogui.moveRel(200, 60, duration=0.3)
+        pyautogui.moveRel(100, 30, duration=0.3)
         pyautogui.click()
         pyautogui.mouseDown()
-        pyautogui.moveRel(200, 0, duration=0.3)
+        pyautogui.moveRel(100, 0, duration=0.3)
         pyautogui.mouseUp()
         time.sleep(0.5)
 
         pyautogui.hotkey('ctrl', 'c')
         plan = pyperclip.paste()
 
-        pyautogui.hotkey('alt', 'tab')
+        presionar_alt_tab_veces(1)
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
-        pyautogui.hotkey('alt', 'tab')
+        presionar_alt_tab_veces(1)
 
         log(f"Plan extraído y pegado: {plan.strip()[:40]}...")
 
@@ -280,7 +261,7 @@ def limpiar_estado_o_cerrar(mensaje_error="Se produjo un error crítico. El proc
 
 def realizar_acciones_teclado(idtexto):
     try:
-        presionar_alt_tab_veces()
+        presionar_alt_tab_veces(2)
         pyautogui.write("***************************************")
         pyautogui.press('enter')
         pyautogui.write("Número de contrato: ")
@@ -312,7 +293,7 @@ def realizar_acciones_teclado(idtexto):
         pyautogui.hotkey('ctrl', 'l')
         pyautogui.hotkey('ctrl', 'c')
 
-        presionar_alt_tab_veces()
+        presionar_alt_tab_veces(1)
         pyautogui.press('enter')
         pyautogui.write("URL del correo:")
         pyautogui.hotkey('ctrl', 'v')
@@ -345,9 +326,9 @@ def main():
     ]):
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
-    enfocado = asegurar_foco_ventana("Gestion ADSL")
-    if not enfocado:
-        log("No se pudo enfocar la ventana de Bloc de notas, continuando de todas formas...")
+    #enfocado = asegurar_foco_ventana("Gestion ADSL")
+    #if not enfocado:
+        #log("No se pudo enfocar la ventana de Bloc de notas, continuando de todas formas...")
 
     log("Esperando 7 segundos para preparar el entorno...")
     time.sleep(7)
@@ -360,15 +341,14 @@ def main():
         intentos += 1
         log(f"Intento #{intentos} para procesar correo...")
 
-        x = pyautogui.size().width // 2 - 439
+        x = pyautogui.size().width // 2 - 419
         y = pyautogui.size().height // 2 - 107
         pyautogui.click(x, y)
-        time.sleep(2)
+        time.sleep(1)
 
         x = pyautogui.size().width // 2 + 139
         y = pyautogui.size().height // 2 - 27
         pyautogui.click(x, y)
-        time.sleep(2)
 
         texto = copiar_texto_del_correo()
 
