@@ -152,34 +152,22 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=3, region=
     return None
 
 
-def hacer_clic_en_imagen_ignorando_primera(ruta_imagen, tolerancia=0.8):
-    print(f"[INFO] Buscando primera coincidencia de: {ruta_imagen}")
-    pantalla = pyautogui.screenshot()
-    pantalla_cv = cv2.cvtColor(np.array(pantalla), cv2.COLOR_RGB2BGR)
-    plantilla = cv2.imread(ruta_imagen, cv2.IMREAD_UNCHANGED)
+def hacer_clic_en_imagen_seleccionando_primera(nombre_imagen, descripcion="", tiempo_espera=3):
+    """
+    Busca una imagen y hace clic en la primera coincidencia encontrada.
+    """
+    print(f"[🧠] Buscando: {descripcion} → Imagen: {nombre_imagen}")
+    puntos = hacer_clic_en_imagen(nombre_imagen, descripcion, tiempo_espera, multiple=True)
 
-    if plantilla is None:
-        print(f"[ERROR] No se pudo cargar la imagen de plantilla: {ruta_imagen}")
-        return False
-
-    resultado = cv2.matchTemplate(pantalla_cv, plantilla, cv2.TM_CCOEFF_NORMED)
-    ubicaciones = np.where(resultado >= tolerancia)
-    puntos = list(zip(*ubicaciones[::-1]))  # (x, y)
-
-    if len(puntos) == 0:
-        print("[INFO] No se encontró ninguna coincidencia.")
-        return False
-
-    # Tomar la primera coincidencia
-    x, y = puntos[0]
-    altura, ancho = plantilla.shape[:2]
-    centro_x = x + ancho // 2
-    centro_y = y + altura // 2
-
-    print(f"[INFO] Clic en la primera coincidencia en: ({centro_x}, {centro_y})")
-    pyautogui.moveTo(centro_x, centro_y, duration=0.2)
-    pyautogui.click()
-    return True
+    if puntos:
+        primero = puntos[0]
+        pyautogui.moveTo(primero[0], primero[1], duration=0.2)
+        pyautogui.click()
+        print(f"[✅] Se hizo clic en la primera coincidencia.")
+        return (primero[0], primero[1])
+    else:
+        print("[❌] No se encontró ninguna coincidencia.")
+        return None
 
 
 def presionar_alt_tab_veces(veces=1):
