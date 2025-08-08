@@ -152,22 +152,47 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=3, region=
     return None
 
 
-def hacer_clic_en_imagen_seleccionando_primera(nombre_imagen, descripcion="", tiempo_espera=3):
+def hacer_clic_en_imagen_ignorando_primera(ruta_imagen, descripcion=None, escalas_posibles=[1.0, 1.1, 0.9, 1.2, 0.8], tolerancia_detectada=0.8, retardo_click=0.3):
     """
-    Busca una imagen y hace clic en la primera coincidencia encontrada.
+    Busca múltiples coincidencias de una imagen en pantalla y hace clic en la primera más a la DERECHA (mayor coordenada X).
+    Se puede usar para evitar hacer clic en la tabla de la izquierda y seleccionar mejor la del centro o derecha.
     """
-    print(f"[🧠] Buscando: {descripcion} → Imagen: {nombre_imagen}")
-    puntos = hacer_clic_en_imagen(nombre_imagen, descripcion, tiempo_espera, multiple=True)
 
-    if puntos:
-        primero = puntos[0]
-        pyautogui.moveTo(primero[0], primero[1], duration=0.2)
-        pyautogui.click()
-        print(f"[✅] Se hizo clic en la primera coincidencia.")
-        return (primero[0], primero[1])
-    else:
-        print("[❌] No se encontró ninguna coincidencia.")
-        return None
+    print(f"Buscando imagen: {descripcion if descripcion else ruta_imagen}")
+    ubicaciones_totales = []
+
+    if not os.path.exists(ruta_imagen):
+        print(f"[ERROR] La imagen no existe: {ruta_imagen}")
+        return False
+
+    pantalla = pyautogui.screenshot()
+    pantalla = cv2.cvtColor(np.array(pantalla), cv2.COLOR_RGB2BGR)
+
+    imagen_referencia = cv2.imread(ruta_imagen)
+
+    for escala in escalas_posibles:
+        imagen_redimensionada = cv2.resize(imagen_referencia, (0, 0), fx=escala, fy=escala)
+        resultado = cv2.matchTemplate(pantalla, imagen_redimensionada, cv2.TM_CCOEFF_NORMED)
+        ubicaciones = np.where(resultado >= tolerancia_detectada)
+
+        for pt in zip(*ubicaciones[::-1]):
+            centro_x = pt[0] + int(imagen_redimensionada.shape[1] / 2)
+            centro_y = pt[1] + int(imagen_redimensionada.shape[0] / 2)
+            ubicaciones_totales.append((centro_x, centro_y))
+
+    if not ubicaciones_totales:
+        print(f"No se encontró la imagen: {descripcion if descripcion else ruta_imagen}")
+        return False
+
+    # 🔁 Elegir la más a la derecha (mayor X)
+    ubicacion_objetivo = max(ubicaciones_totales, key=lambda p: p[0])
+
+    print(f"✅ Imagen detectada en posición más a la derecha: {ubicacion_objetivo}")
+    pyautogui.moveTo(ubicacion_objetivo[0], ubicacion_objetivo[1], duration=0.1)
+    pyautogui.click()
+    time.sleep(retardo_click)
+    return True
+
 
 
 def presionar_alt_tab_veces(veces=1):
