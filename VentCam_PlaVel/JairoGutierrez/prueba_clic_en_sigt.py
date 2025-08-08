@@ -8,6 +8,7 @@ import numpy as np
 from PIL import ImageGrab
 import sys
 import pygetwindow as gw  # Para manejar ventanas por título
+import os
 
 # Configuraciones globales
 pyautogui.PAUSE = 0.1
