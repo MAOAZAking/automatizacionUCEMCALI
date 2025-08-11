@@ -16,7 +16,7 @@ pyautogui.FAILSAFE = False
 ESCALAS_POSIBLES = np.linspace(0.5, 1.5, num=11)
 TOLERANCIA_DETECTADA = 0.75
 
-def asegurar_foco_ventana(titulo_parcial="Python"):
+def asegurar_foco_ventana(titulo_parcial="Bloc de notas"):
     """
     Busca y activa ventana cuyo título contenga titulo_parcial.
     """
