@@ -7,6 +7,8 @@ import cv2
 import numpy as np
 from PIL import ImageGrab
 import sys
+import tkinter as tk
+from tkinter import messagebox
 import pygetwindow as gw  # Para manejar ventanas por título
 
 # Configuraciones globales
@@ -16,7 +18,28 @@ pyautogui.FAILSAFE = False
 ESCALAS_POSIBLES = np.linspace(0.5, 1.5, num=11)
 TOLERANCIA_DETECTADA = 0.75
 
-def asegurar_foco_ventana(titulo_parcial="Python"):
+def mostrar_ventana_exito():
+    # Crear una ventana
+    ventana = tk.Tk()
+    ventana.title("¡Proceso Completo!")
+    
+    # Configuración de la ventana
+    ventana.geometry("400x200")  # Tamaño de la ventana
+    ventana.config(bg="#A8E6CF")  # Color de fondo (un verde suave)
+    
+    # Etiqueta con el mensaje
+    etiqueta = tk.Label(ventana, text="¡Listo! 10 correos han sido procesados.\nSe requiere atención del operador.", 
+                        font=("Helvetica", 14), fg="white", bg="#A8E6CF", padx=20, pady=20)
+    etiqueta.pack(pady=20)
+    
+    # Botón de cierre con diseño atractivo
+    boton_cerrar = tk.Button(ventana, text="Cerrar", font=("Helvetica", 12), bg="#FF8C00", fg="white", command=ventana.quit)
+    boton_cerrar.pack(pady=10)
+    
+    # Mostrar la ventana
+    ventana.mainloop()
+
+def asegurar_foco_ventana(titulo_parcial="Bloc de notas"):
     """
     Busca y activa ventana cuyo título contenga titulo_parcial.
     """
@@ -371,41 +394,51 @@ def main():
     intentos_max = 5
     intentos = 0
     numerocontrato = 0
+    
+    for i in range(10):
+        log(f"Repetición #{i + 1} para procesar el correo...")
 
-    while intentos < intentos_max:
-        intentos += 1
-        log(f"Intento #{intentos} para procesar correo...")
+        while intentos < intentos_max:
+            intentos += 1
+            log(f"Intento #{intentos} para procesar correo...")
 
-        x = pyautogui.size().width // 2 - 419
-        y = pyautogui.size().height // 2 - 107
-        pyautogui.click(x, y)
-        time.sleep(1)
+            x = pyautogui.size().width // 2 - 419
+            y = pyautogui.size().height // 2 - 107
+            pyautogui.click(x, y)
+            time.sleep(1)
 
-        x = pyautogui.size().width // 2 + 139
-        y = pyautogui.size().height // 2 - 27
-        pyautogui.click(x, y)
+            x = pyautogui.size().width // 2 + 139
+            y = pyautogui.size().height // 2 - 27
+            pyautogui.click(x, y)
 
-        texto = copiar_texto_del_correo()
+            texto = copiar_texto_del_correo()
 
-        if texto:
-            id_encontrado = buscar_id_en_texto(texto)
-            if id_encontrado:
-                numerocontrato = id_encontrado
-                copiar_id_a_portapapeles(numerocontrato)
-                realizar_acciones_teclado(numerocontrato)
-                break
+            if texto:
+                id_encontrado = buscar_id_en_texto(texto)
+                if id_encontrado:
+                    numerocontrato = id_encontrado
+                    copiar_id_a_portapapeles(numerocontrato)
+                    realizar_acciones_teclado(numerocontrato)
+                    break
+                else:
+                    numerocontrato = 0
             else:
                 numerocontrato = 0
-        else:
-            numerocontrato = 0
 
-        if numerocontrato == 0:
-            log("NÚMERO DE CONTRATO no encontrado, mostrando alerta.")
+            if numerocontrato == 0:
+                log("NÚMERO DE CONTRATO no encontrado, mostrando alerta.")
+                mostrar_alerta_y_terminar()
+
+        if intentos >= intentos_max:
+            log(f"No se pudo procesar el correo después de {intentos_max} intentos.")
             mostrar_alerta_y_terminar()
+        
 
-    if intentos >= intentos_max:
-        log(f"No se pudo procesar el correo después de {intentos_max} intentos.")
-        mostrar_alerta_y_terminar()
+        # Resetear los intentos para la próxima repetición
+        intentos = 0
+        numerocontrato = 0
+        mostrar_ventana_exito()
+        
 
 if __name__ == "__main__":
     main()
