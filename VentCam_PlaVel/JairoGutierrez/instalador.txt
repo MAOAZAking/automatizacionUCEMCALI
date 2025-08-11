@@ -1,0 +1,11 @@
+pip install -r requirements.txt
+
+Instalar las dependencias con el codigo de arriba
+#################################################
+
+pyinstaller --onefile nombre_del_archivo.py
+
+Este comando se usa en terminal para que convierta el archivo python en un archivo ejecutable (una aplicacion)
+
+
+Gestion ADSL
