@@ -40,7 +40,7 @@ def asegurar_foco_ventana(titulo_parcial="Python"):
     if not enfocado:
         log("No se pudo enfocar la ventana Python, continuando de todas formas...")
 
-    enfocado = asegurar_foco_ventana("SIGT")
+    enfocado = asegurar_foco_ventana("Gestion ADSL")
     if not enfocado:
         log("No se pudo enfocar la ventana Python, continuando de todas formas...")
 
