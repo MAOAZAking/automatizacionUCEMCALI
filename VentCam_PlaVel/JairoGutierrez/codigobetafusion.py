@@ -61,15 +61,15 @@ def asegurar_foco_ventana(titulo_parcial="Bloc de notas"):
 
     enfocado = asegurar_foco_ventana("Bloc de notas")
     if not enfocado:
-        log("No se pudo enfocar la ventana Python, continuando de todas formas...")
+        log("No se pudo enfocar la ventana 'BLOC DE NOTAS', continuando de todas formas...")
 
     enfocado = asegurar_foco_ventana("Gestion ADSL")
     if not enfocado:
-        log("No se pudo enfocar la ventana Python, continuando de todas formas...")
+        log("No se pudo enfocar la ventana 'DEL APLICATIVO SIGT', continuando de todas formas...")
 
     enfocado = asegurar_foco_ventana("Correo: ")
     if not enfocado:
-        log("No se pudo enfocar la ventana Python, continuando de todas formas...")
+        log("No se pudo enfocar la ventana 'DEL CORREO ELECTRÓNICO', continuando de todas formas...")
 
 def log(msg):
     print(f"[LOG] {msg}")
@@ -359,7 +359,14 @@ def realizar_acciones_teclado(idtexto):
 
         hacer_clic_en_imagen("imagenes/mover_a.png", "Botón Mover Correo")
         hacer_clic_en_imagen("imagenes/mostrar_todas_las_carpetas.png", "Mostrar todas las carpetas")
-        hacer_clic_en_imagen("imagenes/seleccionar_carpeta.png", "Carpeta destino")
+        hacer_clic_en_imagen("imagenes/seleccionar_carpeta.png", "Seleccionar carpeta de destino")
+        
+        hacer_clic_en_imagen("imagenes/ver_correos_procesador.png", "Ver correos procesador")
+        hacer_clic_en_imagen("imagenes/acomodar_orden_de_correos_segun_bloc_de_notas.png", "Poner orden descendente de correos procesados")
+        hacer_clic_en_imagen("imagenes/elecciona_primer_correo_procesado.png", "Seleccionar primer correo procesado")
+        enfocado = asegurar_foco_ventana("Bloc de notas")
+        if not enfocado:
+            log("No se pudo enfocar la ventana 'BLOC DE NOTAS', continuando de todas formas...")
 
         log("Acciones completadas.")
     except Exception as e:
