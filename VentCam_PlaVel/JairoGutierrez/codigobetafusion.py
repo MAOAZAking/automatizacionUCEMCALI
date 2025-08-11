@@ -61,15 +61,15 @@ def asegurar_foco_ventana(titulo_parcial="Bloc de notas"):
 
     enfocado = asegurar_foco_ventana("Bloc de notas")
     if not enfocado:
-        log("No se pudo enfocar la ventana 'BLOC DE NOTAS', continuando de todas formas...")
+        log("No se pudo enfocar la ventana 'BLOC DE NOTAS'")
 
     enfocado = asegurar_foco_ventana("Gestion ADSL")
     if not enfocado:
-        log("No se pudo enfocar la ventana 'DEL APLICATIVO SIGT', continuando de todas formas...")
+        log("No se pudo enfocar la ventana 'DEL APLICATIVO SIGT'")
 
     enfocado = asegurar_foco_ventana("Correo: ")
     if not enfocado:
-        log("No se pudo enfocar la ventana 'DEL CORREO ELECTRÓNICO', continuando de todas formas...")
+        log("No se pudo enfocar la ventana 'DEL CORREO ELECTRÓNICO'")
 
 def log(msg):
     print(f"[LOG] {msg}")
@@ -366,7 +366,7 @@ def realizar_acciones_teclado(idtexto):
         hacer_clic_en_imagen("imagenes/elecciona_primer_correo_procesado.png", "Seleccionar primer correo procesado")
         enfocado = asegurar_foco_ventana("Bloc de notas")
         if not enfocado:
-            log("No se pudo enfocar la ventana 'BLOC DE NOTAS', continuando de todas formas...")
+            log("No se pudo enfocar la ventana 'BLOC DE NOTAS'")
 
         log("Acciones completadas.")
     except Exception as e:
@@ -393,7 +393,7 @@ def main():
 
     #enfocado = asegurar_foco_ventana("Gestion ADSL")
     #if not enfocado:
-        #log("No se pudo enfocar la ventana de Bloc de notas, continuando de todas formas...")
+        #log("No se pudo enfocar la ventana de Bloc de notas")
 
     log("Esperando 7 segundos para preparar el entorno...")
     time.sleep(7)
