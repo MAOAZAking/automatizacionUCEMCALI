@@ -9,7 +9,7 @@ from PIL import ImageGrab
 import sys
 import tkinter as tk
 from tkinter import messagebox
-import pygetwindow as gw  # Para manejar ventanas por título
+import pygetwindow as gw
 
 # Configuraciones globales
 pyautogui.PAUSE = 0.1
@@ -23,10 +23,10 @@ def mostrar_ventana_exito(cantidad):
     ventana.title("¡Proceso Completo!")
     
     ventana.geometry("400x200")
-    ventana.config(bg="#A8E6CF")  # Verde suave
+    ventana.config(bg="#A8E6CF")
 
     mensaje = f"¡Listo! {cantidad} correo(s) han sido procesados correctamente.\nSe requiere atención del operador."
-    etiqueta = tk.Label(ventana, text=mensaje, 
+    etiqueta = tk.Label(ventana, text=mensaje,
                         font=("Helvetica", 14), fg="white", bg="#A8E6CF", padx=20, pady=20)
     etiqueta.pack(pady=20)
 
@@ -82,47 +82,79 @@ def copiar_texto_del_correo():
         pyautogui.hotkey('ctrl', 'c')
         texto = pyperclip.paste()
         if texto.strip():
-            log(f"Texto copiado del correo: {texto[:50]}...")  # Muestra solo primeros 50 chars
+            log(f"Texto copiado del correo: {texto[:50]}...")
             return texto
         else:
             log("Texto copiado está vacío.")
             return None
     except Exception as e:
-        limpiar_estado_o_cerrar(f"Error al copiar el contendio del correo para buscar su NÚMERO DE CONTRATO: {e}")
+        limpiar_estado_o_cerrar(f"Error al copiar el contenido del correo para buscar su NÚMERO DE CONTRATO: {e}")
 
 def buscar_id_en_texto(texto):
     try:
-        # Convertir a minúsculas para evitar problemas con mayúsculas o tildes
-        texto = texto.lower()
-
-        # Lista de patrones flexibles para identificar el número de contrato
-        patron = (
-            r'(?:'                        # Grupo no capturante para las variantes
-                r'n[úu]?m(?:ero)?\.?\s*'   # Variaciones de número: num, núm, número, núm. etc.
-                r'(?:de\s*)?'              # Opcionalmente "de"
-                r'contrato|'               # seguido de "contrato"
-                r'contrato|'               # o solo la palabra "contrato"
-                r'n°|'                     # símbolo N°
-                r'#|'                      # símbolo #
-                r'nro\.?|'                 # abreviatura nro, nro.
-                r'nº'                      # símbolo Nº
+        # --- Modificación aquí para manejar números de teléfono ---
+        # 1. Normalizar el texto: eliminar paréntesis y guiones.
+        texto_normalizado = texto.lower().replace('(', '').replace(')', '').replace('-', '')
+        
+        # 2. Patrón para buscar el número de contrato
+        patron_contrato = (
+            r'(?:'
+                r'n[úu]?m(?:ero)?\.?\s*'
+                r'(?:de\s*)?'
+                r'contrato|'
+                r'contrato|'
+                r'n°|'
+                r'#|'
+                r'nro\.?|'
+                r'nº'
                 r'no'
                 r'no.'
                 r'no:'
                 r'no...'
-            r')\s*(\d{4,})'                # Captura un número de al menos 3 dígitos (ajustable)
+            r')\s*(\d{4,})' # Captura un número de al menos 4 dígitos
         )
 
-        match = re.search(patron, texto)
-        if match:
-            id_encontrado = match.group(1)
-            log(f"ID encontrado: {id_encontrado}")
-            return id_encontrado
-        else:
-            log("No se encontró un númeor de contrato válido en el texto")
-            return None
+        match_contrato = re.search(patron_contrato, texto.lower()) # Usamos texto.lower() para el contrato
+        if match_contrato:
+            id_encontrado = match_contrato.group(1)
+            log(f"ID de contrato encontrado: {id_encontrado}")
+            return id_encontrado, None # Devolvemos el ID de contrato y None para el teléfono
+        
+        # 3. Patrón para buscar el número de teléfono
+        # Considera palabras como "línea", "línea base", "número telefónico", "teléfono", "celular", "móvil", "fono"
+        # Seguido de números.
+        patron_telefono = (
+            r'(?:'
+                r'línea(?: base)?|'
+                r'numero telef[oó]nico|'
+                r'telefono|'
+                r'celular|'
+                r'm[oó]vil|'
+                r'fono|'
+                r'tel' # Para "teléfono" abreviado
+            r')\s*(?:[.:]?\s*)?' # Puede haber dos puntos o un espacio después de la palabra clave
+            r'(\d{7,10})' # Captura 7 a 10 dígitos (ya sin guiones ni paréntesis)
+        )
+        
+        match_telefono = re.search(patron_telefono, texto_normalizado) # Usamos el texto normalizado aquí
+        if match_telefono:
+            numero_telefonico = match_telefono.group(1)
+            # Aseguramos que tenga 10 dígitos si empieza por 602 y tiene 7
+            if len(numero_telefonico) == 7 and numero_telefonico.startswith('602'):
+                pass # Ya está bien si el 602 está incluido en los 7 dígitos capturados
+            elif len(numero_telefonico) == 7 and not numero_telefonico.startswith('602'):
+                numero_telefonico = '602' + numero_telefonico # Agrega el 602 si faltan y son 7
+            
+            log(f"Número telefónico encontrado: {numero_telefonico}")
+            return None, numero_telefonico # Devolvemos None para contrato y el número de teléfono
+        
+        log("No se encontró ni un número de contrato válido ni un número telefónico en el texto.")
+        return None, None # Si no se encuentra ninguno
+    
     except Exception as e:
-        limpiar_estado_o_cerrar(f"Error al buscar su NÚMERO DE CONTRATO, puede que este correo no diga exactamente NÚMERO DE CONTRATO: {e}")
+        limpiar_estado_o_cerrar(f"Error al buscar NÚMERO DE CONTRATO o TELÉFONO: {e}")
+        return None, None
+
 
 def copiar_id_a_portapapeles(idtexto):
     try:
@@ -143,7 +175,6 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=3, region=
     """
     print(f"[🧠] Buscando: {descripcion} → Imagen: {nombre_imagen}")
 
-    # Carga la imagen base en escala de grises
     template = cv2.imread(nombre_imagen, cv2.IMREAD_GRAYSCALE)
     if template is None:
         print(f"[❌] No se pudo cargar la imagen {nombre_imagen}")
@@ -152,7 +183,7 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=3, region=
     h_template, w_template = template.shape
 
     tiempo_inicio = time.time()
-    escalas = np.linspace(0.6, 1.4, num=20)  # Escalas desde 60% a 140%
+    escalas = np.linspace(0.6, 1.4, num=20)
 
     while time.time() - tiempo_inicio < tiempo_espera:
         captura = pyautogui.screenshot(region=region)
@@ -177,9 +208,8 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=3, region=
             mejores_puntos.sort(key=lambda x: x[2], reverse=True)
 
             if multiple:
-                return mejores_puntos  # Devolver todas las coincidencias
+                return mejores_puntos
 
-            # Solo una coincidencia: hacer clic
             mejor_pt = mejores_puntos[0]
             abs_x, abs_y = mejor_pt[0], mejor_pt[1]
             print(f"[✅] Coincidencia encontrada en ({abs_x}, {abs_y}) con confianza: {mejor_pt[2]:.2f}")
@@ -187,16 +217,10 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=3, region=
             pyautogui.click()
             return (abs_x, abs_y)
 
-
     print(f"[⚠️] No se encontró la imagen: {nombre_imagen}")
     return None
 
-
 def hacer_clic_en_imagen_ignorando_primera(nombre_imagen, descripcion="", tiempo_espera=3):
-    """
-    Busca una imagen, ignora la primera coincidencia (más cercana arriba/izquierda),
-    y hace clic en la segunda coincidencia si existe.
-    """
     print(f"[🧠] Buscando (ignorando 1ra): {descripcion} → Imagen: {nombre_imagen}")
     puntos = hacer_clic_en_imagen(nombre_imagen, descripcion, tiempo_espera, multiple=True)
 
@@ -216,11 +240,10 @@ def hacer_clic_en_imagen_ignorando_primera(nombre_imagen, descripcion="", tiempo
         return None
 
 def presionar_alt_tab_veces(veces=1):
-    pyautogui.keyDown('alt')  # Mantiene presionado Alt
+    pyautogui.keyDown('alt')
     for _ in range(veces):
-        pyautogui.press('tab')  # Pulsa Tab sin soltar Alt
-    pyautogui.keyUp('alt')     # Suelta Alt
-
+        pyautogui.press('tab')
+    pyautogui.keyUp('alt')
 
 def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=75, desplazamiento_y=0, convertir=False):
     try:
@@ -247,14 +270,13 @@ def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=75, 
                 valor = "602" + valor
             pyperclip.copy(valor)
 
-        # Pegamos TODO el texto copiado (etiqueta + info) sin escribir la etiqueta manual
-        presionar_alt_tab_veces(1)  # Cambiar al Bloc de notas
+        presionar_alt_tab_veces(1)
         pyautogui.write(f"{etiqueta} : ")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
         presionar_alt_tab_veces(1)
 
-        log(f"{etiqueta} extraído y pegado: {valor.strip()[:40]}...")  # Log parcial
+        log(f"{etiqueta} extraído y pegado: {valor.strip()[:40]}...")
 
         return valor
 
@@ -321,7 +343,6 @@ def realizar_acciones_teclado(idtexto):
         hacer_clic_en_imagen("imagenes/buscar.png", "Botón Buscar")
         time.sleep(2)
 
-        #   Seleccionar contrato activo
         hacer_clic_en_imagen("imagenes/seleccionar_contrato_activo.png", "Seleccionar el Contrato que este activo")
         
         extraer_dato_desde_etiqueta("Nombre", "imagenes/nombre.png")
@@ -354,85 +375,100 @@ def realizar_acciones_teclado(idtexto):
             log("No se pudo enfocar la ventana 'BLOC DE NOTAS'")
 
         log("Acciones completadas.")
+        return True
     except Exception as e:
         limpiar_estado_o_cerrar(f"Error en realizar_acciones_teclado(): {e}")
+        return False
 
 def main():
     if not validar_imagenes([
-        "imagenes/consultas.png",
-        "imagenes/forma_buscar.png",
-        "imagenes/seleccionar_contrato.png",
-        "imagenes/seleccionar_contrato_activo.png",
-        "imagenes/valor.png",
-        "imagenes/buscar.png",
-        "imagenes/nombre.png",
-        "imagenes/email.png",
-        "imagenes/numero_contacto.png",
-        "imagenes/tipo_cliente.png",
-        "imagenes/informacion_contrato.png",
-        "imagenes/mover_a.png",
-        "imagenes/mostrar_todas_las_carpetas.png",
-        "imagenes/seleccionar_carpeta.png"
+        "imagenes/consultas.png", "imagenes/forma_buscar.png", "imagenes/seleccionar_contrato.png",
+        "imagenes/seleccionar_contrato_activo.png", "imagenes/valor.png", "imagenes/buscar.png",
+        "imagenes/nombre.png", "imagenes/email.png", "imagenes/numero_contacto.png",
+        "imagenes/tipo_cliente.png", "imagenes/informacion_contrato.png", "imagenes/mover_a.png",
+        "imagenes/mostrar_todas_las_carpetas.png", "imagenes/seleccionar_carpeta.png"
     ]):
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
-        # Enfocar ventanas necesarias en orden
-    ventanas_a_enfocar = [
-        "Bloc de notas",
-        "Gestion ADSL",
-        "Correo:"
-    ]
+    ventanas_a_enfocar = ["Bloc de notas", "Gestion ADSL", "Correo:"]
+    log("Esperando 7 segundos para preparar el entorno...")
+    time.sleep(7)
 
     for titulo in ventanas_a_enfocar:
         enfocado = asegurar_foco_ventana(titulo)
         if not enfocado:
-            log(f"No se pudo enfocar la ventana: '{titulo}'")
-
-    log("Esperando 7 segundos para preparar el entorno...")
-    time.sleep(7)
+            log(f"No se pudo enfocar la ventana: '{titulo}'.")
 
     intentos_max = 5
     intentos = 0
-    numerocontrato = 0
-    
+    correos_procesados = 0
+
     for i in range(10):
         log(f"Repetición #{i + 1} para procesar el correo...")
-
+        
+        # Bucle para reintentar la obtención de datos del correo
         while intentos < intentos_max:
             intentos += 1
             log(f"Intento #{intentos} para procesar correo...")
 
+            # Clics iniciales para seleccionar el correo (mantengo tus coordenadas)
             x = pyautogui.size().width // 2 - 419
             y = pyautogui.size().height // 2 - 107
             pyautogui.click(x, y)
             time.sleep(1)
-
             x = pyautogui.size().width // 2 + 139
             y = pyautogui.size().height // 2 - 27
             pyautogui.click(x, y)
 
-            texto = copiar_texto_del_correo()
+            texto_del_correo = copiar_texto_del_correo()
 
-            if texto:
-                id_encontrado = buscar_id_en_texto(texto)
-                if id_encontrado:
-                    numerocontrato = id_encontrado
-                    copiar_id_a_portapapeles(numerocontrato)
-                    realizar_acciones_teclado(numerocontrato)
-                    break
+            if texto_del_correo:
+                # Ahora buscar_id_en_texto devuelve dos valores: contrato_id y telefono_encontrado
+                contrato_id, telefono_encontrado = buscar_id_en_texto(texto_del_correo)
+                
+                if contrato_id: # Priorizamos el número de contrato si se encuentra
+                    log(f"Contrato encontrado: {contrato_id}")
+                    copiar_id_a_portapapeles(contrato_id) # Se usa el ID de contrato para las acciones
+                    if realizar_acciones_teclado(contrato_id):
+                        correos_procesados += 1
+                        break # Salimos del bucle while si el correo se procesó con éxito
+                elif telefono_encontrado: # Si no hay contrato, buscamos el teléfono
+                    log(f"Teléfono encontrado: {telefono_encontrado}")
+                    # Aquí podrías decidir qué hacer con el número de teléfono
+                    # Por ejemplo, guardarlo en el portapapeles y pegarlo en el Bloc de notas.
+                    pyperclip.copy(telefono_encontrado)
+                    presionar_alt_tab_veces(1) # Cambiar al Bloc de notas
+                    pyautogui.write("Número de Teléfono: ")
+                    pyautogui.hotkey('ctrl', 'v')
+                    pyautogui.press('enter')
+                    presionar_alt_tab_veces(1) # Volver al correo
+                    
+                    correos_procesados += 1
+                    break # Salimos del bucle while si el teléfono se encontró y se procesó (o lo que decidas hacer)
                 else:
-                    numerocontrato = 0
+                    # Ni contrato ni teléfono encontrados en este correo.
+                    log("Ni NÚMERO DE CONTRATO ni TELÉFONO encontrados. Reintentando...")
             else:
-                numerocontrato = 0
-
-            if numerocontrato == 0:
-                log("NÚMERO DE CONTRATO no encontrado, mostrando alerta.")
-                mostrar_alerta_y_terminar()
-
-        if intentos >= intentos_max:
-            log(f"No se pudo procesar el correo después de {intentos_max} intentos.")
-            mostrar_alerta_y_terminar()
+                log("Texto copiado está vacío. Reintentando...")
         
+        # Lógica para manejar si el correo actual no tiene ID/Teléfono o falló tras reintentos
+        if not (contrato_id or telefono_encontrado) and intentos >= intentos_max:
+            # Si no se encontró ni contrato ni teléfono DESPUÉS DE LOS INTENTOS MÁXIMOS
+            log("No se encontró NÚMERO DE CONTRATO ni TELÉFONO después de múltiples intentos. Finalizando el proceso.")
+            mostrar_ventana_exito(correos_procesados)
+            return # Finalizamos la ejecución del programa
+        elif not (contrato_id or telefono_encontrado):
+            # Si no se encontró en el primer intento pero aún quedan intentos, el bucle 'while' continuará
+            pass # Ya se registró "Ni NÚMERO DE CONTRATO ni TELÉFONO encontrados. Reintentando..."
+
+        # Reseteamos variables para el siguiente correo
+        intentos = 0
+        contrato_id = None # Aseguramos que se reinicien para el siguiente correo
+        telefono_encontrado = None
+
+    # Este código solo se ejecuta si el bucle 'for' completa las 10 iteraciones sin que se detenga antes
+    log("Todos los correos han sido procesados. Mostrando ventana de éxito.")
+    mostrar_ventana_exito(correos_procesados)
 
 if __name__ == "__main__":
     main()
