@@ -18,26 +18,23 @@ pyautogui.FAILSAFE = False
 ESCALAS_POSIBLES = np.linspace(0.5, 1.5, num=11)
 TOLERANCIA_DETECTADA = 0.75
 
-def mostrar_ventana_exito():
-    # Crear una ventana
+def mostrar_ventana_exito(cantidad):
     ventana = tk.Tk()
     ventana.title("¡Proceso Completo!")
     
-    # Configuración de la ventana
-    ventana.geometry("400x200")  # Tamaño de la ventana
-    ventana.config(bg="#A8E6CF")  # Color de fondo (un verde suave)
-    
-    # Etiqueta con el mensaje
-    etiqueta = tk.Label(ventana, text="¡Listo! 10 correos han sido procesados.\nSe requiere atención del operador.", 
+    ventana.geometry("400x200")
+    ventana.config(bg="#A8E6CF")  # Verde suave
+
+    mensaje = f"¡Listo! {cantidad} correo(s) han sido procesados correctamente.\nSe requiere atención del operador."
+    etiqueta = tk.Label(ventana, text=mensaje, 
                         font=("Helvetica", 14), fg="white", bg="#A8E6CF", padx=20, pady=20)
     etiqueta.pack(pady=20)
-    
-    # Botón de cierre con diseño atractivo
+
     boton_cerrar = tk.Button(ventana, text="Cerrar", font=("Helvetica", 12), bg="#FF8C00", fg="white", command=ventana.quit)
     boton_cerrar.pack(pady=10)
-    
-    # Mostrar la ventana
+
     ventana.mainloop()
+
 
 def asegurar_foco_ventana(titulo_parcial="Bloc de notas"):
     """
@@ -58,18 +55,6 @@ def asegurar_foco_ventana(titulo_parcial="Bloc de notas"):
     except Exception as e:
         log(f"Error al enfocar ventana: {e}")
         return False
-
-    enfocado = asegurar_foco_ventana("Bloc de notas")
-    if not enfocado:
-        log("No se pudo enfocar la ventana 'BLOC DE NOTAS'")
-
-    enfocado = asegurar_foco_ventana("Gestion ADSL")
-    if not enfocado:
-        log("No se pudo enfocar la ventana 'DEL APLICATIVO SIGT'")
-
-    enfocado = asegurar_foco_ventana("Correo: ")
-    if not enfocado:
-        log("No se pudo enfocar la ventana 'DEL CORREO ELECTRÓNICO'")
 
 def log(msg):
     print(f"[LOG] {msg}")
@@ -391,9 +376,17 @@ def main():
     ]):
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
-    #enfocado = asegurar_foco_ventana("Gestion ADSL")
-    #if not enfocado:
-        #log("No se pudo enfocar la ventana de Bloc de notas")
+        # Enfocar ventanas necesarias en orden
+    ventanas_a_enfocar = [
+        "Bloc de notas",
+        "Gestion ADSL",
+        "Correo:"
+    ]
+
+    for titulo in ventanas_a_enfocar:
+        enfocado = asegurar_foco_ventana(titulo)
+        if not enfocado:
+            log(f"No se pudo enfocar la ventana: '{titulo}'")
 
     log("Esperando 7 segundos para preparar el entorno...")
     time.sleep(7)
@@ -439,12 +432,6 @@ def main():
         if intentos >= intentos_max:
             log(f"No se pudo procesar el correo después de {intentos_max} intentos.")
             mostrar_alerta_y_terminar()
-        
-
-        # Resetear los intentos para la próxima repetición
-        intentos = 0
-        numerocontrato = 0
-        mostrar_ventana_exito()
         
 
 if __name__ == "__main__":
