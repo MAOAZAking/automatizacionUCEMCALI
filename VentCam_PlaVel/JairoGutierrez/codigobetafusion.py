@@ -38,23 +38,30 @@ def mostrar_ventana_exito(cantidad):
 
 def asegurar_foco_ventana(titulo_parcial="Bloc de notas"):
     """
-    Busca y activa ventana cuyo título contenga titulo_parcial.
+    Asegura que las ventanas se enfoquen en el orden correcto y las que no deben estar al frente se mantengan al fondo.
     """
     try:
-        log(f"Intentando enfocar ventana con título que contenga '{titulo_parcial}'...")
-        ventanas = [v for v in gw.getAllWindows() if titulo_parcial.lower() in v.title.lower()]
-        if ventanas:
-            ventana = ventanas[0]
-            ventana.activate()
-            time.sleep(1)
-            log(f"Ventana '{ventana.title}' activada.")
-            return True
-        else:
-            log(f"No se encontró ventana con título que contenga '{titulo_parcial}'.")
-            return False
+        # Primero activamos 'Bloc de notas', pero no lo traemos al frente (en el fondo)
+        for ventana in ventanas:
+            ventanas_encontradas = [v for v in gw.getAllWindows() if ventana.lower() in v.title.lower()]
+            if ventanas_encontradas:
+                v = ventanas_encontradas[0]
+                if "Bloc de notas" in ventana:
+                    # "Bloc de notas" se activa pero se mantiene al fondo (lo minimizamos primero)
+                    v.minimize()
+                    time.sleep(1)
+                    v.restore()  # Lo restauramos, pero se quedará al fondo
+                else:
+                    # El resto de las ventanas se activan normalmente
+                    v.activate()
+                    time.sleep(1)
+
+                print(f"Ventana activada: {v.title}")
+            else:
+                print(f"No se encontró la ventana con título: {ventana}")
     except Exception as e:
-        log(f"Error al enfocar ventana: {e}")
-        return False
+        print(f"Error al enfocar ventanas: {e}")
+
 
 def log(msg):
     print(f"[LOG] {msg}")
@@ -392,10 +399,11 @@ def main():
 
     ventanas_a_enfocar = ["Bloc de notas", "Gestion ADSL", "Correo:"]
     log("Esperando 7 segundos para preparar el entorno...")
-    time.sleep(7)
+
 
     for titulo in ventanas_a_enfocar:
         enfocado = asegurar_foco_ventana(titulo)
+        time.sleep(0.5)
         if not enfocado:
             log(f"No se pudo enfocar la ventana: '{titulo}'.")
 
