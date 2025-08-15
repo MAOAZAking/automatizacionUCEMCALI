@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+########### SE NECESITA QUE SE ABRA LA CARPETA CORREOS POR REVISAR E INTENTE DAR CLIC, Y COPIAR EL CORREO, Y BUSCAR EL ID PERO SI NO ENCUENTRA, VAYA AHI SI A ALA CARPETA DE REVISADOS Y FINALIZAR EL CODIGO ################
 import pyautogui
 import pyperclip
 import time
@@ -6,6 +6,7 @@ import re
 import ctypes
 import cv2
 import numpy as np
+import unicodedata
 from PIL import ImageGrab
 import sys
 import tkinter as tk
@@ -115,7 +116,7 @@ def buscar_id_en_texto(texto):
     """
     try:
         # --- Lógica de búsqueda de Contrato y Teléfono ---
-        texto_normalizado = texto.lower().replace('(', '').replace(')', '').replace('-', '')
+        texto_normalizado = texto.lower().replace('(', '').replace(')', '').replace('-', '').replace('—', '').replace('...', '')
         
         # Patrón para buscar el número de contrato
         patron_contrato = (
@@ -299,11 +300,11 @@ def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=75, 
                 valor = "602" + valor
             pyperclip.copy(valor)
 
-        presionar_alt_tab_veces(1)
+        asegurar_foco_ventana("Bloc de notas")
         pyautogui.write(f"{etiqueta} : ")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
-        presionar_alt_tab_veces(1)
+        asegurar_foco_ventana("Gestion ADSL")
 
         log(f"{etiqueta} extraído y pegado: {valor.strip()[:40]}...")
 
@@ -335,10 +336,11 @@ def extraer_plan_desde_tabla():
         pyautogui.hotkey('ctrl', 'c')
         plan = pyperclip.paste()
 
-        presionar_alt_tab_veces(1)
+        asegurar_foco_ventana("Bloc de notas")
         pyautogui.write("Plan : ")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
+        asegurar_foco_ventana("Bloc de notas")
 
         log(f"Plan extraído y pegado: {plan.strip()[:40]}...")
 
@@ -361,7 +363,7 @@ def realizar_acciones_teclado(idtexto):
     """
     try:
         # Volver al bloc de notas y preparar la entrada
-        presionar_alt_tab_veces(2)
+        asegurar_foco_ventana("Bloc de notas")
         pyautogui.press('enter')
         pyautogui.write("******************************************************************************")
         pyautogui.press('enter')
@@ -375,9 +377,7 @@ def realizar_acciones_teclado(idtexto):
 
         # Lógica para adaptarse al estado de la ventana de Gestión ADSL
         log("Adaptando al estado de la ventana de Gestión ADSL...")
-        if hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
-            log("El formulario de búsqueda ya está abierto. Continuando.")
-        elif hacer_clic_en_imagen("imagenes/consultas.png", "Botón 'Consultas'"):
+        if hacer_clic_en_imagen("imagenes/consultas.png", "Botón 'Consultas'"):
             log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
             if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
                 limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
@@ -407,17 +407,18 @@ def realizar_acciones_teclado(idtexto):
         extraer_dato_desde_etiqueta("Tipo de cliente", "imagenes/tipo_cliente.png")
         extraer_plan_desde_tabla()
 
-        asegurar_foco_ventana("Bloc de notas")
+        asegurar_foco_ventana("Correo:")
         pyautogui.hotkey('ctrl', 'l')
         pyautogui.hotkey('ctrl', 'c')
 
-        asegurar_foco_ventana("Correo:")
+        asegurar_foco_ventana("Bloc de notas")
         pyautogui.press('enter')
         pyautogui.write("URL del correo:")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
         pyautogui.press('enter')
         
+        asegurar_foco_ventana("Correo:")
         hacer_clic_en_imagen("imagenes/mover_a.png", "Botón Mover Correo")
         hacer_clic_en_imagen("imagenes/mostrar_todas_las_carpetas.png", "Mostrar todas las carpetas")
         hacer_clic_en_imagen("imagenes/seleccionar_carpeta.png", "Seleccionar carpeta de destino")
