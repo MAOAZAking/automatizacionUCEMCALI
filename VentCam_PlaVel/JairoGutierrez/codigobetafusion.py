@@ -534,7 +534,7 @@ for titulo in ventanas_a_enfocar:
         if not (contrato_id or telefono_encontrado) and intentos >= intentos_max:
             log("No se encontró NÚMERO DE CONTRATO ni TELÉFONO después de múltiples intentos. Finalizando el proceso.")
             mostrar_ventana_exito(correos_procesados)
-            return
+            break
         elif not (contrato_id or telefono_encontrado):
             pass
 
@@ -544,6 +544,8 @@ for titulo in ventanas_a_enfocar:
 
     log("Todos los correos han sido procesados. Mostrando ventana de éxito.")
     mostrar_ventana_exito(correos_procesados)
+
+
 
 if __name__ == "__main__":
     main()
