@@ -41,51 +41,27 @@ def mostrar_ventana_exito(cantidad):
     ventana.mainloop()
 
 
-def asegurar_foco_ventana(titulo):
+def asegurar_foco_ventana(titulo_parcial):
     """
-    Asegura que se enfoca una ventana por nombre parcial.
-    Si la ventana se encuentra, la activa y le da foco.
+    Busca y activa la ventana cuyo título contenga titulo_parcial.
+    Este método es el más confiable para traer una ventana al frente.
     """
     try:
-        ventanas_encontradas = [v for v in gw.getAllWindows() if titulo.lower() in v.title.lower()]
+        log(f"Intentando enfocar ventana con título que contenga '{titulo_parcial}'...")
+        # Buscamos todas las ventanas que contengan el título parcial.
+        ventanas_encontradas = [v for v in gw.getAllWindows() if titulo_parcial.lower() in v.title.lower()]
         
         if ventanas_encontradas:
-            v = ventanas_encontradas[0]  # Tomar la primera ventana que coincida (si hay varias)
-            
-            if "Bloc de notas" in titulo:
-                # Minimizar y luego restaurar para mantenerlo al fondo
-                if v.isMinimized:
-                    v.restore()  # Restaurar si está minimizada
-                v.activate()  # Activar la ventana
-                time.sleep(1)
-                v.minimize()  # Minimizar de nuevo para mantenerlo en el fondo
-                print(f"Ventana activada y minimizada: {v.title}")
-                return True
-            
-            elif "Gestion" in titulo:
-                # Activar 'Gestion'
-                if v.isMinimized:
-                    v.restore()  # Restaurar si está minimizada
-                v.activate()  # Activar la ventana
-                time.sleep(1)
-                print(f"Ventana activada: {v.title}")
-                return True
-            
-            elif "correo" in titulo:
-                # Finalmente, activar 'Correo' y ponerlo al frente
-                if v.isMinimized:
-                    v.restore()  # Restaurar si está minimizada
-                v.activate()  # Activar la ventana
-                time.sleep(1)
-                print(f"Ventana activada al frente: {v.title}")
-                return True
-            
+            ventana = ventanas_encontradas[0] # Tomamos la primera coincidencia
+            ventana.activate()
+            time.sleep(1) # Damos un tiempo para que el sistema procese el cambio de foco.
+            log(f"Ventana '{ventana.title}' activada.")
+            return True
         else:
-            print(f"No se encontró ninguna ventana que contenga: {titulo}")
+            log(f"No se encontró ventana con título que contenga '{titulo_parcial}'.")
             return False
-            
     except Exception as e:
-        print(f"Error al enfocar ventana '{titulo}': {e}")
+        log(f"Error al enfocar ventana: {e}")
         return False
 
 
@@ -381,7 +357,6 @@ def realizar_acciones_teclado(idtexto):
     Realiza todas las acciones de búsqueda y extracción de datos en la aplicación.
     """
     try:
-        # Volver al bloc de notas y preparar la entrada
         presionar_alt_tab_veces(2)
         pyautogui.press('enter')
         pyautogui.write("******************************************************************************")
@@ -391,28 +366,10 @@ def realizar_acciones_teclado(idtexto):
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
 
-        # Cambiar a la ventana de Gestión ADSL
         presionar_alt_tab_veces(2)
 
-        # Lógica para adaptarse al estado de la ventana de Gestión ADSL
-        log("Adaptando al estado de la ventana de Gestión ADSL...")
-        if hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
-            log("El formulario de búsqueda ya está abierto. Continuando.")
-        elif hacer_clic_en_imagen("imagenes/consultas.png", "Botón 'Consultas'"):
-            log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
-            if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
-                limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
-        elif hacer_clic_en_imagen("imagenes/mostrar_menu_para_Seleccionar_consultas.png", "Botón para mostrar menú"):
-            log("Se hizo clic en el botón de menú. Buscando 'Consultas' ahora.")
-            if not hacer_clic_en_imagen("imagenes/consultas.png", "Botón 'Consultas'"):
-                limpiar_estado_o_cerrar("No se encontró el botón 'Consultas' después de abrir el menú.")
-            log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
-            if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
-                limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
-        else:
-            limpiar_estado_o_cerrar("No se encontró ningún punto de entrada conocido en la ventana de Gestión ADSL.")
-
-        # Continuación del flujo normal una vez que el formulario de búsqueda está listo.
+        hacer_clic_en_imagen("imagenes/consultas.png", "Panel Consultar Contrato")
+        hacer_clic_en_imagen("imagenes/forma_buscar.png", "Desplegar forma de búsqueda")
         hacer_clic_en_imagen("imagenes/seleccionar_contrato.png", "Seleccionar opción Contrato")
         hacer_clic_en_imagen("imagenes/valor.png", "Campo de Valor del contrato")
         pyautogui.hotkey('ctrl', 'v')
@@ -468,21 +425,19 @@ def main():
         "imagenes/seleccionar_contrato_activo.png", "imagenes/valor.png", "imagenes/buscar.png",
         "imagenes/nombre.png", "imagenes/email.png", "imagenes/numero_contacto.png",
         "imagenes/tipo_cliente.png", "imagenes/informacion_contrato.png", "imagenes/mover_a.png",
-        "imagenes/mostrar_todas_las_carpetas.png", "imagenes/seleccionar_carpeta.png",
-        "imagenes/mostrar_menu_para_Seleccionar_consultas.png"
+        "imagenes/mostrar_todas_las_carpetas.png", "imagenes/seleccionar_carpeta.png"
     ]):
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
     log("Esperando 7 segundos para preparar el entorno...")
+    time.sleep(7)
 
-
-# Lista de ventanas a enfocar en el orden especificado
-ventanas_a_enfocar = ["Bloc de notas", "Gestion ADSL", "Correo:"]
-for titulo in ventanas_a_enfocar:
-    enfocado = asegurar_foco_ventana(titulo)
-    time.sleep(0.5)
-    if not enfocado:
-        print(f"No se pudo enfocar la ventana: '{titulo}'.")
+    # Lista de ventanas a enfocar al inicio.
+    ventanas_a_enfocar = ["Bloc de notas", "Gestion ADSL", "Correo:"]
+    for titulo in ventanas_a_enfocar:
+        enfocado = asegurar_foco_ventana(titulo)
+        if not enfocado:
+            log(f"No se pudo enfocar la ventana: '{titulo}'.")
 
     intentos_max = 5
     intentos = 0
