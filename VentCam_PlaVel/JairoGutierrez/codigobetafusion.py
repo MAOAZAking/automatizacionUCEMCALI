@@ -41,27 +41,51 @@ def mostrar_ventana_exito(cantidad):
     ventana.mainloop()
 
 
-def asegurar_foco_ventana(titulo_parcial):
+def asegurar_foco_ventana(titulo):
     """
-    Busca y activa la ventana cuyo título contenga titulo_parcial.
-    Este método es el más confiable para traer una ventana al frente.
+    Asegura que se enfoca una ventana por nombre parcial.
+    Si la ventana se encuentra, la activa y le da foco.
     """
     try:
-        log(f"Intentando enfocar ventana con título que contenga '{titulo_parcial}'...")
-        # Buscamos todas las ventanas que contengan el título parcial.
-        ventanas_encontradas = [v for v in gw.getAllWindows() if titulo_parcial.lower() in v.title.lower()]
+        ventanas_encontradas = [v for v in gw.getAllWindows() if titulo.lower() in v.title.lower()]
         
         if ventanas_encontradas:
-            ventana = ventanas_encontradas[0] # Tomamos la primera coincidencia
-            ventana.activate()
-            time.sleep(1) # Damos un tiempo para que el sistema procese el cambio de foco.
-            log(f"Ventana '{ventana.title}' activada.")
-            return True
+            v = ventanas_encontradas[0]  # Tomar la primera ventana que coincida (si hay varias)
+            
+            if "Bloc de notas" in titulo:
+                # Minimizar y luego restaurar para mantenerlo al fondo
+                if v.isMinimized:
+                    v.restore()  # Restaurar si está minimizada
+                v.activate()  # Activar la ventana
+                time.sleep(1)
+                v.minimize()  # Minimizar de nuevo para mantenerlo en el fondo
+                print(f"Ventana activada y minimizada: {v.title}")
+                return True
+            
+            elif "Gestion" in titulo:
+                # Activar 'Gestion'
+                if v.isMinimized:
+                    v.restore()  # Restaurar si está minimizada
+                v.activate()  # Activar la ventana
+                time.sleep(1)
+                print(f"Ventana activada: {v.title}")
+                return True
+            
+            elif "correo" in titulo:
+                # Finalmente, activar 'Correo' y ponerlo al frente
+                if v.isMinimized:
+                    v.restore()  # Restaurar si está minimizada
+                v.activate()  # Activar la ventana
+                time.sleep(1)
+                print(f"Ventana activada al frente: {v.title}")
+                return True
+            
         else:
-            log(f"No se encontró ventana con título que contenga '{titulo_parcial}'.")
+            print(f"No se encontró ninguna ventana que contenga: {titulo}")
             return False
+            
     except Exception as e:
-        log(f"Error al enfocar ventana: {e}")
+        print(f"Error al enfocar ventana '{titulo}': {e}")
         return False
 
 
@@ -450,14 +474,15 @@ def main():
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
     log("Esperando 7 segundos para preparar el entorno...")
-    time.sleep(7)
 
-    # Lista de ventanas a enfocar al inicio.
-    ventanas_a_enfocar = ["Bloc de notas", "Gestion ADSL", "Correo:"]
-    for titulo in ventanas_a_enfocar:
-        enfocado = asegurar_foco_ventana(titulo)
-        if not enfocado:
-            log(f"No se pudo enfocar la ventana: '{titulo}'.")
+
+# Lista de ventanas a enfocar en el orden especificado
+ventanas_a_enfocar = ["Bloc de notas", "Gestion ADSL", "Correo:"]
+for titulo in ventanas_a_enfocar:
+    enfocado = asegurar_foco_ventana(titulo)
+    time.sleep(0.5)
+    if not enfocado:
+        print(f"No se pudo enfocar la ventana: '{titulo}'.")
 
     intentos_max = 5
     intentos = 0
