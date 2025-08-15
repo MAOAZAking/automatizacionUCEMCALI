@@ -41,51 +41,30 @@ def mostrar_ventana_exito(cantidad):
     ventana.mainloop()
 
 
-def asegurar_foco_ventana(titulo):
+def asegurar_foco_ventana(titulo_parcial):
     """
-    Asegura que se enfoca una ventana por nombre parcial.
-    Si la ventana se encuentra, la activa y le da foco.
+    Busca y activa la ventana cuyo título contenga titulo_parcial.
+    Este método es el más confiable para traer una ventana al frente.
     """
     try:
-        ventanas_encontradas = [v for v in gw.getAllWindows() if titulo.lower() in v.title.lower()]
+        log(f"Intentando enfocar ventana con título que contenga '{titulo_parcial}'...")
+        # Buscamos todas las ventanas que contengan el título parcial.
+        ventanas_encontradas = [v for v in gw.getAllWindows() if titulo_parcial.lower() in v.title.lower()]
         
         if ventanas_encontradas:
-            v = ventanas_encontradas[0]  # Tomar la primera ventana que coincida (si hay varias)
-            
-            if "Bloc de notas" in titulo:
-                # Minimizar y luego restaurar para mantenerlo al fondo
-                if v.isMinimized:
-                    v.restore()  # Restaurar si está minimizada
-                v.activate()  # Activar la ventana
-                time.sleep(1)
-                v.minimize()  # Minimizar de nuevo para mantenerlo en el fondo
-                print(f"Ventana activada y minimizada: {v.title}")
-                return True
-            
-            elif "Gestion" in titulo:
-                # Activar 'Gestion'
-                if v.isMinimized:
-                    v.restore()  # Restaurar si está minimizada
-                v.activate()  # Activar la ventana
-                time.sleep(1)
-                print(f"Ventana activada: {v.title}")
-                return True
-            
-            elif "correo" in titulo:
-                # Finalmente, activar 'Correo' y ponerlo al frente
-                if v.isMinimized:
-                    v.restore()  # Restaurar si está minimizada
-                v.activate()  # Activar la ventana
-                time.sleep(1)
-                print(f"Ventana activada al frente: {v.title}")
-                return True
-            
+            ventana = ventanas_encontradas[0] # Tomamos la primera coincidencia
+            # Restaurar y activar si está minimizada.
+            if ventana.isMinimized:
+                ventana.restore()
+            ventana.activate()
+            time.sleep(1) # Damos un tiempo para que el sistema procese el cambio de foco.
+            log(f"Ventana '{ventana.title}' activada.")
+            return True
         else:
-            print(f"No se encontró ninguna ventana que contenga: {titulo}")
+            log(f"No se encontró ventana con título que contenga '{titulo_parcial}'.")
             return False
-            
     except Exception as e:
-        print(f"Error al enfocar ventana '{titulo}': {e}")
+        log(f"Error al enfocar ventana: {e}")
         return False
 
 
@@ -392,7 +371,7 @@ def realizar_acciones_teclado(idtexto):
         pyautogui.press('enter')
 
         # Cambiar a la ventana de Gestión ADSL
-        presionar_alt_tab_veces(2)
+        asegurar_foco_ventana("Gestion ADSL")
 
         # Lógica para adaptarse al estado de la ventana de Gestión ADSL
         log("Adaptando al estado de la ventana de Gestión ADSL...")
@@ -428,18 +407,17 @@ def realizar_acciones_teclado(idtexto):
         extraer_dato_desde_etiqueta("Tipo de cliente", "imagenes/tipo_cliente.png")
         extraer_plan_desde_tabla()
 
-        presionar_alt_tab_veces(2)
+        asegurar_foco_ventana("Bloc de notas")
         pyautogui.hotkey('ctrl', 'l')
         pyautogui.hotkey('ctrl', 'c')
 
-        presionar_alt_tab_veces(1)
+        asegurar_foco_ventana("Correo:")
         pyautogui.press('enter')
         pyautogui.write("URL del correo:")
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
         pyautogui.press('enter')
-        presionar_alt_tab_veces(1)
-
+        
         hacer_clic_en_imagen("imagenes/mover_a.png", "Botón Mover Correo")
         hacer_clic_en_imagen("imagenes/mostrar_todas_las_carpetas.png", "Mostrar todas las carpetas")
         hacer_clic_en_imagen("imagenes/seleccionar_carpeta.png", "Seleccionar carpeta de destino")
@@ -449,9 +427,7 @@ def realizar_acciones_teclado(idtexto):
         hacer_clic_en_imagen("imagenes/elecciona_primer_correo_procesado.png", "Seleccionar primer correo procesado")
         
         # Enfocamos el bloc de notas al final para que el operador pueda ver el resultado.
-        enfocado = asegurar_foco_ventana("Bloc de notas")
-        if not enfocado:
-            log("No se pudo enfocar la ventana 'BLOC DE NOTAS'")
+        asegurar_foco_ventana("Bloc de notas")
 
         log("Acciones completadas.")
         return True
@@ -474,15 +450,14 @@ def main():
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
     log("Esperando 7 segundos para preparar el entorno...")
+    time.sleep(7)
 
-
-# Lista de ventanas a enfocar en el orden especificado
-ventanas_a_enfocar = ["Bloc de notas", "Gestion ADSL", "Correo:"]
-for titulo in ventanas_a_enfocar:
-    enfocado = asegurar_foco_ventana(titulo)
-    time.sleep(0.5)
-    if not enfocado:
-        print(f"No se pudo enfocar la ventana: '{titulo}'.")
+    # Asegurar que todas las ventanas están enfocadas en el orden correcto
+    log("Asegurando el foco de las ventanas...")
+    asegurar_foco_ventana("Bloc de notas")
+    asegurar_foco_ventana("Gestion ADSL")
+    asegurar_foco_ventana("Correo:")
+    log("Foco de ventanas asegurado. Iniciando el procesamiento de correos.")
 
     intentos_max = 5
     intentos = 0
@@ -494,6 +469,9 @@ for titulo in ventanas_a_enfocar:
         while intentos < intentos_max:
             intentos += 1
             log(f"Intento #{intentos} para procesar correo...")
+
+            # Aseguramos el foco en la ventana de Correo para cada intento
+            asegurar_foco_ventana("Correo:")
 
             # Clics para seleccionar el correo.
             x = pyautogui.size().width // 2 - 419
@@ -518,11 +496,11 @@ for titulo in ventanas_a_enfocar:
                 elif telefono_encontrado:
                     log(f"Teléfono encontrado: {telefono_encontrado}")
                     pyperclip.copy(telefono_encontrado)
-                    presionar_alt_tab_veces(1)
+                    asegurar_foco_ventana("Bloc de notas")
                     pyautogui.write("Número de Teléfono: ")
                     pyautogui.hotkey('ctrl', 'v')
                     pyautogui.press('enter')
-                    presionar_alt_tab_veces(1)
+                    asegurar_foco_ventana("Correo:")
                     
                     correos_procesados += 1
                     break
@@ -534,7 +512,7 @@ for titulo in ventanas_a_enfocar:
         if not (contrato_id or telefono_encontrado) and intentos >= intentos_max:
             log("No se encontró NÚMERO DE CONTRATO ni TELÉFONO después de múltiples intentos. Finalizando el proceso.")
             mostrar_ventana_exito(correos_procesados)
-            break
+            return
         elif not (contrato_id or telefono_encontrado):
             pass
 
