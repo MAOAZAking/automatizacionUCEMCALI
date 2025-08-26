@@ -58,7 +58,7 @@ def asegurar_foco_ventana(titulo_parcial):
             if ventana.isMinimized:
                 ventana.restore()
             ventana.activate()
-            time.sleep(1) # Damos un tiempo para que el sistema procese el cambio de foco.
+            time.sleep(0.5) # Damos un tiempo para que el sistema procese el cambio de foco.
             log(f"Ventana '{ventana.title}' activada.")
             return True
         else:
@@ -289,7 +289,6 @@ def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=75, 
         pyautogui.mouseDown()
         pyautogui.moveRel(150, 0, duration=0.3)
         pyautogui.mouseUp()
-        time.sleep(0.5)
 
         pyautogui.hotkey('ctrl', 'c')
         valor = pyperclip.paste()
@@ -331,7 +330,6 @@ def extraer_plan_desde_tabla():
         pyautogui.mouseDown()
         pyautogui.moveRel(100, 30, duration=0.3)
         pyautogui.mouseUp()
-        time.sleep(0.5)
 
         pyautogui.hotkey('ctrl', 'c')
         plan = pyperclip.paste()
@@ -421,7 +419,7 @@ def realizar_acciones_teclado(idtexto):
         asegurar_foco_ventana("Correo:")
         hacer_clic_en_imagen("imagenes/mover_a.png", "Botón Mover Correo")
         hacer_clic_en_imagen("imagenes/mostrar_todas_las_carpetas.png", "Mostrar todas las carpetas")
-        hacer_clic_en_imagen("imagenes/seleccionar_carpeta.png", "Seleccionar carpeta de destino")
+        hacer_clic_en_imagen("imagenes/seleccionar_carpeta_correos_revisados.png", "Seleccionar carpeta de destino")
         
         hacer_clic_en_imagen("imagenes/ver_correos_procesador.png", "Ver correos procesador")
         hacer_clic_en_imagen("imagenes/acomodar_orden_de_correos_segun_bloc_de_notas.png", "Poner orden descendente de correos procesados")
@@ -445,13 +443,13 @@ def main():
         "imagenes/seleccionar_contrato_activo.png", "imagenes/valor.png", "imagenes/buscar.png",
         "imagenes/nombre.png", "imagenes/email.png", "imagenes/numero_contacto.png",
         "imagenes/tipo_cliente.png", "imagenes/informacion_contrato.png", "imagenes/mover_a.png",
-        "imagenes/mostrar_todas_las_carpetas.png", "imagenes/seleccionar_carpeta.png",
+        "imagenes/mostrar_todas_las_carpetas.png", "imagenes/seleccionar_carpeta_correos_revisados.png",
         "imagenes/mostrar_menu_para_Seleccionar_consultas.png"
     ]):
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
-    log("Esperando 7 segundos para preparar el entorno...")
-    time.sleep(7)
+    log("Esperando 2 segundos para preparar el entorno...")
+    time.sleep(2)
 
     # Asegurar que todas las ventanas están enfocadas en el orden correcto
     log("Asegurando el foco de las ventanas...")
@@ -471,21 +469,68 @@ def main():
             intentos += 1
             log(f"Intento #{intentos} para procesar correo...")
 
+            # Limpiar el portapapeles antes de realizar cualquier acción
+            pyperclip.copy('')  # Esto vacía el portapapeles
+
+
             # Aseguramos el foco en la ventana de Correo para cada intento
             asegurar_foco_ventana("Correo:")
+
+            # Dar clic en la imagen para cambiar el orden de los correos por fecha
+            hacer_clic_en_imagen("imagenes/cambiar_orden_de_correos_por_fecha.png", "Cambiar orden de correos por fecha")
+
+            # Dar clic en la imagen para organizar los correos del más antiguo al más nuevo
+            hacer_clic_en_imagen("imagenes/organizar_correos_del_mas_antiguo_al_mas_nuevo.png", "Organizar correos del más antiguo al más nuevo")
+
+            # Esperar 2 segundos para que se organicen los correos
+            time.sleep(2)
 
             # Clics para seleccionar el correo.
             x = pyautogui.size().width // 2 - 419
             y = pyautogui.size().height // 2 - 107
             pyautogui.click(x, y)
-            time.sleep(1)
+
+            # Clics sobre el contenido del correo.
             x = pyautogui.size().width // 2 + 139
             y = pyautogui.size().height // 2 - 27
             pyautogui.click(x, y)
 
             texto_del_correo = copiar_texto_del_correo()
 
-            if texto_del_correo:
+            # Después de copiar el texto del correo, verificamos si el portapapeles está vacío
+            if pyperclip.paste().strip() == "":
+                log("El portapapeles está vacío. No se pudo copiar el texto del correo.")
+
+                # Si el portapapeles está vacío, significa que no hay más correos por revisar.
+                log("No hay más correos por revisar, cambiando a la carpeta de correos revisados.")
+
+                # Dar clic en la carpeta de "correos revisados"
+                hacer_clic_en_imagen("imagenes/seleccionar_carpeta_correos_revisados.png", "Seleccionar carpeta 'Correos revisados'")
+
+                # Esperar a que se carguen los correos revisados
+                time.sleep(1)
+
+                # Seleccionar el correo más arriba
+                x = pyautogui.size().width // 2 - 419
+                y = pyautogui.size().height // 2 - 107
+                pyautogui.click(x, y)
+
+                # Dar clic en la imagen para cambiar el orden de los correos por fecha
+                hacer_clic_en_imagen("imagenes/cambiar_orden_de_correos_por_fecha.png", "Cambiar orden de correos por fecha")
+
+                # Dar clic en la imagen para organizar los correos del más antiguo al más nuevo
+                hacer_clic_en_imagen("imagenes/organizar_correos_del_mas_antiguo_al_mas_nuevo.png", "Organizar correos del más antiguo al más nuevo")
+
+                # Esperar 2 segundos para que se organicen los correos
+                time.sleep(2)
+
+                # Mostrar el mensaje de que todos los correos han sido procesados
+                mostrar_ventana_exito(correos_procesados)
+
+                # Terminar el flujo si no hay más correos que revisar
+                return
+
+            elif texto_del_correo:
                 contrato_id, telefono_encontrado = buscar_id_en_texto(texto_del_correo)
                 
                 if contrato_id:
