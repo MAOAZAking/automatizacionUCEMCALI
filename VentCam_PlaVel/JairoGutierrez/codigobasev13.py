@@ -475,10 +475,6 @@ def main():
             pyperclip.copy('')  # Esto vacía el portapapeles
 
 
-            # Limpiar el portapapeles antes de realizar cualquier acción
-            pyperclip.copy('')  # Esto vacía el portapapeles
-
-
             # Aseguramos el foco en la ventana de Correo para cada intento
             asegurar_foco_ventana("Correo:")
 
@@ -574,5 +570,8 @@ def main():
 
     log("Todos los correos han sido procesados. Mostrando ventana de éxito.")
     mostrar_ventana_exito(correos_procesados)
+
+
+
 if __name__ == "__main__":
     main()
