@@ -570,5 +570,8 @@ def main():
 
     log("Todos los correos han sido procesados. Mostrando ventana de éxito.")
     mostrar_ventana_exito(correos_procesados)
+
+
+
 if __name__ == "__main__":
     main()
