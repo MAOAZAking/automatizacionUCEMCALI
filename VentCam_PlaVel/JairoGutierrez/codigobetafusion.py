@@ -220,7 +220,7 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=3, region=
                 continue
 
             resultado = cv2.matchTemplate(captura, resized_template, cv2.TM_CCOEFF_NORMED)
-            umbral = 0.8
+            umbral = 0.68
             ubicaciones = np.where(resultado >= umbral)
 
             for pt in zip(*ubicaciones[::-1]):
@@ -468,15 +468,9 @@ def main():
         while intentos < intentos_max:
             intentos += 1
             log(f"Intento #{intentos} para procesar correo...")
-            contrato_id = None  # Reiniciar en cada intento
-            telefono_encontrado = None
 
             # Limpiar el portapapeles antes de realizar cualquier acción
-            pyperclip.copy('')  # Esto vacía el portapapeles
-
-
-            # Limpiar el portapapeles antes de realizar cualquier acción
-            pyperclip.copy('')  # Esto vacía el portapapeles
+            pyperclip.copy('0')  # Esto vacía el portapapeles
 
 
             # Aseguramos el foco en la ventana de Correo para cada intento
@@ -492,7 +486,7 @@ def main():
             time.sleep(2)
 
             # Clics para seleccionar el correo.
-            x = pyautogui.size().width // 2 - 390
+            x = pyautogui.size().width // 2 - 419
             y = pyautogui.size().height // 2 - 107
             pyautogui.click(x, y)
 
@@ -504,7 +498,7 @@ def main():
             texto_del_correo = copiar_texto_del_correo()
 
             # Después de copiar el texto del correo, verificamos si el portapapeles está vacío
-            if pyperclip.paste().strip() == "":
+            if pyperclip.paste().strip() == "0":
                 log("El portapapeles está vacío. No se pudo copiar el texto del correo.")
 
                 # Si el portapapeles está vacío, significa que no hay más correos por revisar.
