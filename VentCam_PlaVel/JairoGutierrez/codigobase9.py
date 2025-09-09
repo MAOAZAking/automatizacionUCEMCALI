@@ -336,30 +336,43 @@ def main():
     log("Esperando 7 segundos para preparar el entorno...")
     time.sleep(7)
 
-    x = pyautogui.size().height // 2 - 107
-    y = pyautogui.size().width // 2 - 419
-    pyautogui.click(x, y)
-    time.sleep(1)
+    intentos_max = 5
+    intentos = 0
+    numerocontrato = 0
 
-    x = pyautogui.size().width // 2 + 139
-    y = pyautogui.size().height // 2 - 27
-    pyautogui.click(x, y)
+    while intentos < intentos_max:
+        intentos += 1
+        log(f"Intento #{intentos} para procesar correo...")
 
-    texto = copiar_texto_del_correo()
+        x = pyautogui.size().width // 2 - 419
+        y = pyautogui.size().height // 2 - 107
+        pyautogui.click(x, y)
+        time.sleep(1)
 
-    if texto:
-        id_encontrado = buscar_id_en_texto(texto)
-        if id_encontrado:
-            numerocontrato = id_encontrado
-            copiar_id_a_portapapeles(numerocontrato)
-            realizar_acciones_teclado(numerocontrato)
+        x = pyautogui.size().width // 2 + 139
+        y = pyautogui.size().height // 2 - 27
+        pyautogui.click(x, y)
+
+        texto = copiar_texto_del_correo()
+
+        if texto:
+            id_encontrado = buscar_id_en_texto(texto)
+            if id_encontrado:
+                numerocontrato = id_encontrado
+                copiar_id_a_portapapeles(numerocontrato)
+                realizar_acciones_teclado(numerocontrato)
+                break
+            else:
+                numerocontrato = 0
         else:
             numerocontrato = 0
-    else:
-        numerocontrato = 0
 
-    if numerocontrato == 0:
-        log("NÚMERO DE CONTRATO no encontrado, mostrando alerta.")
+        if numerocontrato == 0:
+            log("NÚMERO DE CONTRATO no encontrado, mostrando alerta.")
+            mostrar_alerta_y_terminar()
+
+    if intentos >= intentos_max:
+        log(f"No se pudo procesar el correo después de {intentos_max} intentos.")
         mostrar_alerta_y_terminar()
 
 if __name__ == "__main__":
