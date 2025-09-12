@@ -434,6 +434,56 @@ def realizar_acciones_teclado(idtexto):
         limpiar_estado_o_cerrar(f"Error en realizar_acciones_teclado(): {e}")
         return False
 
+def validar_y_ordenar_correos_por_fecha():
+    """
+    Verifica si los correos están ordenados de más antiguo a más nuevo.
+    Si están de reciente a antiguo, cambia el orden.
+    Si no se encuentra el ícono de fecha, busca íconos alternativos de filtro y actúa en consecuencia.
+    """
+    log("Verificando y ajustando orden de correos por fecha...")
+
+    # Primero, intenta encontrar el ícono que indica orden por fecha
+    fecha_icono = hacer_clic_en_imagen("imagenes/cambiar_orden_de_correos_por_fecha.png", "Ícono de orden por fecha", tiempo_espera=2)
+
+    if fecha_icono is None:
+        log("No se encontró el ícono de fecha, buscando íconos de filtrado alternativos...")
+
+        alternativas = [
+            "imagenes/filtrado_de_reciente_a_antiguo.png",
+            "imagenes/filtrado_de_antiguo_a_reciente.png"
+        ]
+
+        for img in alternativas:
+            punto = hacer_clic_en_imagen(img, f"Ícono alternativo: {img}", tiempo_espera=2)
+            if punto:
+                # Clic 40px a la derecha del ícono encontrado
+                x, y = punto[0] + 40, punto[1]
+                pyautogui.click(x, y)
+                log(f"Se hizo clic 40px a la derecha del ícono: {img}")
+                break
+        else:
+            log("No se encontraron íconos alternativos para ordenar los correos.")
+            return
+
+        # Luego de usar íconos alternativos, intentar de nuevo encontrar el de fecha
+        fecha_icono = hacer_clic_en_imagen("imagenes/cambiar_orden_de_correos_por_fecha.png", "Ícono de orden por fecha", tiempo_espera=2)
+
+    if fecha_icono:
+        # Ahora que se detectó el ícono de fecha, verificar el estado del ordenamiento
+        log("Verificando tipo de orden (reciente a antiguo o viceversa)...")
+
+        reciente_a_antiguo = hacer_clic_en_imagen("imagenes/filtrado_de_reciente_a_antiguo.png", "Orden de reciente a antiguo", tiempo_espera=1)
+
+        if reciente_a_antiguo:
+            # Si está en orden de reciente a antiguo, hacer clic para cambiarlo
+            log("El orden es de reciente a antiguo. Cambiando a más antiguo a más nuevo...")
+            pyautogui.click(fecha_icono[0], fecha_icono[1])
+        else:
+            log("El orden ya está en más antiguo a más nuevo. No se requiere acción.")
+    else:
+        log("No se pudo validar ni ajustar el orden por fecha.")
+
+
 def main():
     """
     Función principal que ejecuta el flujo de automatización.
@@ -476,14 +526,9 @@ def main():
             # Aseguramos el foco en la ventana de Correo para cada intento
             asegurar_foco_ventana("Correo:")
 
-            # Dar clic en la imagen para cambiar el orden de los correos por fecha
-            hacer_clic_en_imagen("imagenes/cambiar_orden_de_correos_por_fecha.png", "Cambiar orden de correos por fecha")
-
-            # Dar clic en la imagen para organizar los correos del más antiguo al más nuevo
-            hacer_clic_en_imagen("imagenes/organizar_correos_del_mas_antiguo_al_mas_nuevo.png", "Organizar correos del más antiguo al más nuevo")
-
-            # Esperar 2 segundos para que se organicen los correos
+            validar_y_ordenar_correos_por_fecha()
             time.sleep(2)
+
 
             # Clics para seleccionar el correo.
             x = pyautogui.size().width // 2 - 419
@@ -571,4 +616,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-#############SE NECESITA QUE VALIDE SI YA ESTA EN ORDEN TIPO FECHA, Y CAMBIAR EL ORDEN, SOLO SI ESTA USANDO EL ICONO DE NUEVO A ANTIGUO, Y SI NO ENCUENTRA LA IMAGEN DE FECHA, DEBE BUSCAR UNA DE LAS 2 IMAGENES: "filtrado_de_reciente_a_antiguo.png" o "filtrado_de_antiguo_a_reciente.png" y debe darle clic 40px mas a la derecha de alguno de estos 2 y luego si buscar fecha y dar clicc sobre ella y validar el tipo de orden y ponerlo en mas antiguo al mans nuevo #############

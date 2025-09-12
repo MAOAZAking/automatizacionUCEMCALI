@@ -644,5 +644,3 @@ def main():
     mostrar_ventana_exito(correos_procesados)
 if __name__ == "__main__":
     main()
-
-#############SE NECESITA QUE VALIDE SI YA ESTA EN ORDEN TIPO FECHA, Y CAMBIAR EL ORDEN, SOLO SI ESTA USANDO EL ICONO DE NUEVO A ANTIGUO, Y SI NO ENCUENTRA LA IMAGEN DE FECHA, DEBE BUSCAR UNA DE LAS 2 IMAGENES: "filtrado_de_reciente_a_antiguo.png" o "filtrado_de_antiguo_a_reciente.png" y debe darle clic 40px mas a la derecha de alguno de estos 2 y luego si buscar fecha y dar clicc sobre ella y validar el tipo de orden y ponerlo en mas antiguo al mans nuevo #############

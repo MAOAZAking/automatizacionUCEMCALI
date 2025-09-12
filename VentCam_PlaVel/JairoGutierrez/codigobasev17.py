@@ -408,10 +408,17 @@ def realizar_acciones_teclado(idtexto):
             log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
             if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
                 limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
+        elif hacer_clic_en_imagen("imagenes/consultas_sin_seleccionar.png", "Botón 'Consultas sin seleccionar'"):
+            log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
+            if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
+                limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
         elif hacer_clic_en_imagen("imagenes/mostrar_menu_para_Seleccionar_consultas.png", "Botón para mostrar menú"):
             log("Se hizo clic en el botón de menú. Buscando 'Consultas' ahora.")
             if not hacer_clic_en_imagen("imagenes/consultas.png", "Botón 'Consultas'"):
                 limpiar_estado_o_cerrar("No se encontró el botón 'Consultas' después de abrir el menú.")
+            elif hacer_clic_en_imagen("imagenes/consultas_sin_seleccionar.png", "Botón 'Consultas sin seleccionar'"):
+                if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
+                    limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
             log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
             if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
                 limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
@@ -644,5 +651,3 @@ def main():
     mostrar_ventana_exito(correos_procesados)
 if __name__ == "__main__":
     main()
-
-#############SE NECESITA QUE VALIDE SI YA ESTA EN ORDEN TIPO FECHA, Y CAMBIAR EL ORDEN, SOLO SI ESTA USANDO EL ICONO DE NUEVO A ANTIGUO, Y SI NO ENCUENTRA LA IMAGEN DE FECHA, DEBE BUSCAR UNA DE LAS 2 IMAGENES: "filtrado_de_reciente_a_antiguo.png" o "filtrado_de_antiguo_a_reciente.png" y debe darle clic 40px mas a la derecha de alguno de estos 2 y luego si buscar fecha y dar clicc sobre ella y validar el tipo de orden y ponerlo en mas antiguo al mans nuevo #############
