@@ -30,7 +30,7 @@ def mostrar_ventana_exito(cantidad):
     ventana.title("¡Proceso Completo!")
 
     # Tamaño y estilo
-    ventana.geometry("400x200")
+    ventana.geometry("600x200")
     ventana.config(bg="#A8E6CF")
 
     # Mantener la ventana al frente
@@ -408,10 +408,17 @@ def realizar_acciones_teclado(idtexto):
             log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
             if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
                 limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
+        elif hacer_clic_en_imagen("imagenes/consultas_sin_seleccionar.png", "Botón 'Consultas sin seleccionar'"):
+            log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
+            if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
+                limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
         elif hacer_clic_en_imagen("imagenes/mostrar_menu_para_Seleccionar_consultas.png", "Botón para mostrar menú"):
             log("Se hizo clic en el botón de menú. Buscando 'Consultas' ahora.")
             if not hacer_clic_en_imagen("imagenes/consultas.png", "Botón 'Consultas'"):
                 limpiar_estado_o_cerrar("No se encontró el botón 'Consultas' después de abrir el menú.")
+            elif hacer_clic_en_imagen("imagenes/consultas_sin_seleccionar.png", "Botón 'Consultas sin seleccionar'"):
+                if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
+                    limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
             log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
             if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
                 limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
@@ -452,8 +459,11 @@ def realizar_acciones_teclado(idtexto):
         
         hacer_clic_en_imagen("imagenes/ver_correos_procesador.png", "Ver correos procesador")
         hacer_clic_en_imagen("imagenes/acomodar_orden_de_correos_segun_bloc_de_notas.png", "Poner orden descendente de correos procesados")
-        hacer_clic_en_imagen("imagenes/elecciona_primer_correo_procesado.png", "Seleccionar primer correo procesado")
-        
+        # Clics para seleccionar el correo.
+        x = pyautogui.size().width // 2 - 419
+        y = pyautogui.size().height // 2 - 107
+        pyautogui.click(x, y)
+                    
         # Enfocamos el bloc de notas al final para que el operador pueda ver el resultado.
         asegurar_foco_ventana("Bloc de notas")
 
@@ -518,12 +528,28 @@ def main():
     Función principal que ejecuta el flujo de automatización.
     """
     if not validar_imagenes([
-        "imagenes/consultas.png", "imagenes/forma_buscar.png", "imagenes/seleccionar_contrato.png",
-        "imagenes/seleccionar_contrato_activo.png", "imagenes/valor.png", "imagenes/buscar.png",
-        "imagenes/nombre.png", "imagenes/email.png", "imagenes/numero_contacto.png",
-        "imagenes/tipo_cliente.png", "imagenes/informacion_contrato.png", "imagenes/mover_a.png",
-        "imagenes/mostrar_todas_las_carpetas.png", "imagenes/seleccionar_carpeta_correos_revisados.png",
-        "imagenes/mostrar_menu_para_Seleccionar_consultas.png"
+        "imagenes/buscar.png",
+        "imagenes/cambiar_orden_de_correos_por_fecha.png",
+        "imagenes/consultas.png",
+        "imagenes/consultas_sin_seleccionar.png",
+        "imagenes/email.png",
+        "imagenes/filtrado_de_antiguo_a_reciente.png",
+        "imagenes/filtrado_de_reciente_a_antiguo.png",
+        "imagenes/forma_buscar.png",
+        "imagenes/informacion_contrato.png",
+        "imagenes/mostrar_menu_para_seleccionar_consultas.png",
+        "imagenes/mostrar_todas_las_carpetas.png",
+        "imagenes/mover_a.png",
+        "imagenes/nombre.png",
+        "imagenes/numero_contacto.png",
+        "imagenes/organizar_correos_del_mas_antiguo_al_mas_nuevo.png",
+        "imagenes/seleccionar_carpeta_correos_revisados.png",
+        "imagenes/seleccionar_carpeta_por_revisar.png",
+        "imagenes/seleccionar_contrato.png",
+        "imagenes/seleccionar_contrato_activo.png",
+        "imagenes/tipo_cliente.png",
+        "imagenes/valor.png",
+        #################################################################################
     ]):
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
@@ -644,5 +670,3 @@ def main():
     mostrar_ventana_exito(correos_procesados)
 if __name__ == "__main__":
     main()
-
-#############SE NECESITA QUE VALIDE SI YA ESTA EN ORDEN TIPO FECHA, Y CAMBIAR EL ORDEN, SOLO SI ESTA USANDO EL ICONO DE NUEVO A ANTIGUO, Y SI NO ENCUENTRA LA IMAGEN DE FECHA, DEBE BUSCAR UNA DE LAS 2 IMAGENES: "filtrado_de_reciente_a_antiguo.png" o "filtrado_de_antiguo_a_reciente.png" y debe darle clic 40px mas a la derecha de alguno de estos 2 y luego si buscar fecha y dar clicc sobre ella y validar el tipo de orden y ponerlo en mas antiguo al mans nuevo #############
