@@ -5,8 +5,6 @@ import re
 import ctypes
 import cv2
 import numpy as np
-import unicodedata
-from PIL import ImageGrab
 import sys
 import tkinter as tk
 from tkinter import messagebox
@@ -17,8 +15,8 @@ pyautogui.PAUSE = 0.1
 pyautogui.FAILSAFE = False
 
 # Esta lista de escalas permite que la búsqueda de imágenes sea flexible a diferentes resoluciones de pantalla.
-ESCALAS_POSIBLES = np.linspace(0.5, 1.5, num=11)
-TOLERANCIA_DETECTADA = 0.75
+ESCALAS_POSIBLES = np.linspace(0.6, 1.4, num=20)
+TOLERANCIA_DETECTADA = 0.68
 
 def mostrar_ventana_exito(cantidad):
     """
@@ -292,15 +290,6 @@ def hacer_clic_en_imagen_ignorando_primera(nombre_imagen, descripcion="", tiempo
         print("[❌] No se encontró ninguna coincidencia.")
         return None
 
-def presionar_alt_tab_veces(veces=1):
-    """
-    Simula la combinación de teclas Alt+Tab para cambiar de ventana.
-    """
-    pyautogui.keyDown('alt')
-    for _ in range(veces):
-        pyautogui.press('tab')
-    pyautogui.keyUp('alt')
-
 def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=75, desplazamiento_y=0, convertir=False):
     """
     Extrae un dato en pantalla a partir de la ubicación de una imagen (etiqueta).
@@ -566,19 +555,8 @@ def main():
     pyautogui.write('Google Chrome') # Abrir google chrome
     pyautogui.press('enter')
     time.sleep(2)  # Esperar a que Chrome abra
-    pyautogui.write('http://adsl.emcali.net.co/') # Abrir outlook
+    pyautogui.write('http://adsl.emcali.net.co/') # Abrir ADSL
     pyautogui.press('enter')
-    # si encuentra alguna coincidencia visual de la imagen: "imagenes/usuario_adsl.png" entonces llama la funcion hacer_clic_en_imagen, tocar el boton de flecha abajo y 2 veces enter, pero SINO se omite esa parte
-    if hacer_clic_en_imagen("imagenes/usuario_adsl.png", "Seleccionar usuario ADSL", tiempo_espera=5):
-        pyautogui.press('down') # Seleccionar el usuario guardado con autocompletado
-        pyautogui.press('enter') # Presionar enter para que se llenen los campos con la info guardada
-        pyautogui.press('enter') # Presionar enter para iniciar sesion
-    else:
-        log("No se encontró la imagen del usuario ADSL, omitiendo selección de usuario guardado.")
-    hacer_clic_en_imagen("imagenes/usuario_adsl.png", "Seleccionar carpeta 'Correos revisados'")
-    pyautogui.press('down') # Seleccionar el usuario guardado con autocompletado
-    pyautogui.press('enter') # Presionar enter para que se llenen los campos con la info guardada
-    pyautogui.press('enter') # Presionar enter para iniciar sesion
     
     # Reintentar el login de ADSL si es necesario
     login_adsl_exitoso = False
@@ -617,10 +595,11 @@ def main():
     intentos = 0
     correos_procesados = 0
 
-    for i in range(10):
-        log(f"Repetición #{i + 1} para procesar el correo...")
+    while True: # Bucle infinito para procesar todos los correos hasta que no queden más.
+        log(f"Iniciando ciclo de procesamiento de correo...")
         
         while intentos < intentos_max:
+            contrato_id, telefono_encontrado = None, None
             intentos += 1
             log(f"Intento #{intentos} para procesar correo...")
 
@@ -634,12 +613,12 @@ def main():
             validar_y_ordenar_correos_por_fecha()
             time.sleep(2)
 
-
+            # --- ATENCIÓN: Clics con coordenadas fijas. Son frágiles a cambios de resolución o layout. ---
             # Clics para seleccionar el correo.
             x = pyautogui.size().width // 2 - 419
             y = pyautogui.size().height // 2 - 107
             pyautogui.click(x, y)
-
+            
             # Clics sobre el contenido del correo.
             x = pyautogui.size().width // 2 + 139
             y = pyautogui.size().height // 2 - 27
@@ -650,7 +629,7 @@ def main():
             # Después de copiar el texto del correo, verificamos si el portapapeles está vacío
             if pyperclip.paste().strip() == "0":
                 log("El portapapeles está vacío. No se pudo copiar el texto del correo.")
-
+                
                 # Si el portapapeles está vacío, significa que no hay más correos por revisar.
                 log("No hay más correos por revisar, cambiando a la carpeta de correos revisados.")
 
@@ -678,7 +657,7 @@ def main():
                 mostrar_ventana_exito(correos_procesados)
 
                 # Terminar el flujo si no hay más correos que revisar
-                return
+                sys.exit()
 
             elif texto_del_correo:
                 contrato_id, telefono_encontrado = buscar_id_en_texto(texto_del_correo)
@@ -688,7 +667,7 @@ def main():
                     copiar_id_a_portapapeles(contrato_id)
                     if realizar_acciones_teclado(contrato_id):
                         correos_procesados += 1
-                        break
+                        break # Sale del bucle de intentos y pasa al siguiente correo
                 elif telefono_encontrado:
                     log(f"Teléfono encontrado: {telefono_encontrado}")
                     pyperclip.copy(telefono_encontrado)
@@ -699,26 +678,22 @@ def main():
                     asegurar_foco_ventana("Correo:")
                     
                     correos_procesados += 1
-                    break
+                    break # Sale del bucle de intentos y pasa al siguiente correo
                 else:
                     log("Ni NÚMERO DE CONTRATO ni TELÉFONO encontrados. Reintentando...")
             else:
                 log("Texto copiado está vacío. Reintentando...")
         
-        if not (contrato_id or telefono_encontrado) and intentos >= intentos_max:
+        # Si se agotaron los intentos y no se encontró ID, finalizar.
+        if intentos >= intentos_max and not (contrato_id or telefono_encontrado):
             log("No se encontró NÚMERO DE CONTRATO ni TELÉFONO después de múltiples intentos. Finalizando el proceso.")
             mostrar_ventana_exito(correos_procesados)
-            return
-        elif not (contrato_id or telefono_encontrado):
-            pass
+            sys.exit()
 
-        intentos = 0
-        contrato_id = None
-        telefono_encontrado = None
+        # Reiniciar contador de intentos para el próximo correo
+        intentos = 0 
 
-    log("Todos los correos han sido procesados. Mostrando ventana de éxito.")
-    mostrar_ventana_exito(correos_procesados)
 if __name__ == "__main__":
     main()
 
-############################ AHORA VALAIDA SI ESTA INICIADA LA SESSION, SE OMITE LA INICIADA, SINO LA INICIA    #########################################################
+############################  Se limpio el codigo eliminado las importaciones que no se usan y las funciones que no se usan, y se acomodo el orden, logica y metodologia de lso bucles   #########################################################

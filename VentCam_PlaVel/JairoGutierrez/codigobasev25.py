@@ -5,9 +5,6 @@ import re
 import ctypes
 import cv2
 import numpy as np
-import unicodedata
-from PIL import ImageGrab
-import sys
 import tkinter as tk
 from tkinter import messagebox
 import pygetwindow as gw
@@ -17,8 +14,8 @@ pyautogui.PAUSE = 0.1
 pyautogui.FAILSAFE = False
 
 # Esta lista de escalas permite que la búsqueda de imágenes sea flexible a diferentes resoluciones de pantalla.
-ESCALAS_POSIBLES = np.linspace(0.5, 1.5, num=11)
-TOLERANCIA_DETECTADA = 0.75
+ESCALAS_POSIBLES = np.linspace(0.7, 1.3, num=13)
+TOLERANCIA_DETECTADA = 0.68
 
 def mostrar_ventana_exito(cantidad):
     """
@@ -96,6 +93,16 @@ def asegurar_foco_ventana(titulo_parcial):
         log(f"Error al enfocar ventana: {e}")
         return False
 
+def ventana_existe(titulo_parcial):
+    """Verifica si una ventana con el título parcial existe sin activarla."""
+    try:
+        ventanas_encontradas = [v for v in gw.getAllWindows() if titulo_parcial.lower() in v.title.lower()]
+        if len(ventanas_encontradas) > 0:
+            return True
+        return False
+    except Exception as e:
+        log(f"Error al verificar si la ventana '{titulo_parcial}' existe: {e}")
+        return False
 
 def log(msg):
     """
@@ -233,14 +240,13 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=3, region=
     h_template, w_template = template.shape
 
     tiempo_inicio = time.time()
-    escalas = np.linspace(0.6, 1.4, num=20)
 
     while time.time() - tiempo_inicio < tiempo_espera:
         captura = pyautogui.screenshot(region=region)
         captura = cv2.cvtColor(np.array(captura), cv2.COLOR_RGB2GRAY)
 
         mejores_puntos = []
-        for escala in escalas:
+        for escala in ESCALAS_POSIBLES:
             resized_template = cv2.resize(template, (0, 0), fx=escala, fy=escala)
             h, w = resized_template.shape
 
@@ -248,8 +254,7 @@ def hacer_clic_en_imagen(nombre_imagen, descripcion="", tiempo_espera=3, region=
                 continue
 
             resultado = cv2.matchTemplate(captura, resized_template, cv2.TM_CCOEFF_NORMED)
-            umbral = 0.68
-            ubicaciones = np.where(resultado >= umbral)
+            ubicaciones = np.where(resultado >= TOLERANCIA_DETECTADA)
 
             for pt in zip(*ubicaciones[::-1]):
                 mejores_puntos.append((pt[0] + w // 2, pt[1] + h // 2, resultado[pt[1], pt[0]]))
@@ -291,15 +296,6 @@ def hacer_clic_en_imagen_ignorando_primera(nombre_imagen, descripcion="", tiempo
     else:
         print("[❌] No se encontró ninguna coincidencia.")
         return None
-
-def presionar_alt_tab_veces(veces=1):
-    """
-    Simula la combinación de teclas Alt+Tab para cambiar de ventana.
-    """
-    pyautogui.keyDown('alt')
-    for _ in range(veces):
-        pyautogui.press('tab')
-    pyautogui.keyUp('alt')
 
 def extraer_dato_desde_etiqueta(etiqueta, imagen_etiqueta, desplazamiento_x=75, desplazamiento_y=0, convertir=False):
     """
@@ -522,7 +518,39 @@ def validar_y_ordenar_correos_por_fecha():
         log("No se pudo validar ni ajustar el orden por fecha.")
 
 
-def main():
+def abrir_bloc_de_notas():
+    """Abre una nueva instancia del Bloc de notas."""
+    log("Abriendo Bloc de notas...")
+    pyautogui.hotkey('win'); pyautogui.write('Bloc de notas'); pyautogui.press('enter'); time.sleep(2)
+
+def abrir_adsl():
+    """Abre Chrome, navega a ADSL e intenta iniciar sesión."""
+    log("Abriendo Google Chrome para ADSL...")
+    pyautogui.hotkey('win'); pyautogui.write('Google Chrome'); pyautogui.press('enter'); time.sleep(2)
+    pyautogui.write('http://adsl.emcali.net.co/'); pyautogui.press('enter')
+
+    # Reintentar el login de ADSL
+    login_adsl_exitoso = False
+    for intento_login in range(3):
+        log(f"Intento de login en ADSL #{intento_login + 1}")
+        if hacer_clic_en_imagen("imagenes/usuario_adsl.png", "Seleccionar usuario ADSL", tiempo_espera=7):
+            pyautogui.press('down'); pyautogui.press('enter'); pyautogui.press('enter')
+            login_adsl_exitoso = True
+            log("Login en ADSL con autocompletado exitoso.")
+            break
+        else:
+            log("No se encontró la imagen del usuario ADSL en este intento.")
+            time.sleep(2)
+    if not login_adsl_exitoso:
+        log("No se pudo iniciar sesión en ADSL con autocompletado. Asumiendo que ya se inició sesión o no es necesario.")
+
+def abrir_outlook():
+    """Abre Chrome y navega a Outlook."""
+    log("Abriendo Google Chrome para Outlook...")
+    pyautogui.hotkey('win'); pyautogui.write('Google Chrome'); pyautogui.press('enter'); time.sleep(2)
+    pyautogui.write('https://outlook.live.com/mail/0/'); pyautogui.press('enter'); time.sleep(5)
+
+def preparar_entorno():
     """
     Función principal que ejecuta el flujo de automatización.
     """
@@ -552,75 +580,42 @@ def main():
     ]):
         mostrar_alerta_y_terminar("Faltan imágenes necesarias. Revise la carpeta 'imagenes'.")
 
-    log("Esperando 2 segundos para preparar el entorno...")
-    time.sleep(2)
-############################ ABRIR LOS PROGRAMAS NECESARIOS #########################################################
-    
-    ################# Abrir Block de notas ######################
-    pyautogui.hotkey('win')  # Abrir el menú de inicio
-    pyautogui.write('Bloc de notas')
-    pyautogui.press('enter')
-    
-    ################# Abrir Google Chrome para ADSL ######################
-    pyautogui.hotkey('win')  # Abrir el menú de inicio
-    pyautogui.write('Google Chrome') # Abrir google chrome
-    pyautogui.press('enter')
-    time.sleep(2)  # Esperar a que Chrome abra
-    pyautogui.write('http://adsl.emcali.net.co/') # Abrir outlook
-    pyautogui.press('enter')
-    # si encuentra alguna coincidencia visual de la imagen: "imagenes/usuario_adsl.png" entonces llama la funcion hacer_clic_en_imagen, tocar el boton de flecha abajo y 2 veces enter, pero SINO se omite esa parte
-    if hacer_clic_en_imagen("imagenes/usuario_adsl.png", "Seleccionar usuario ADSL", tiempo_espera=5):
-        pyautogui.press('down') # Seleccionar el usuario guardado con autocompletado
-        pyautogui.press('enter') # Presionar enter para que se llenen los campos con la info guardada
-        pyautogui.press('enter') # Presionar enter para iniciar sesion
+    log("Paso 1: Verificando y abriendo las aplicaciones necesarias...")
+
+    if not ventana_existe("Bloc de notas"):
+        abrir_bloc_de_notas()
     else:
-        log("No se encontró la imagen del usuario ADSL, omitiendo selección de usuario guardado.")
-    hacer_clic_en_imagen("imagenes/usuario_adsl.png", "Seleccionar carpeta 'Correos revisados'")
-    pyautogui.press('down') # Seleccionar el usuario guardado con autocompletado
-    pyautogui.press('enter') # Presionar enter para que se llenen los campos con la info guardada
-    pyautogui.press('enter') # Presionar enter para iniciar sesion
-    
-    # Reintentar el login de ADSL si es necesario
-    login_adsl_exitoso = False
-    for intento in range(3): # Intentará hasta 3 veces
-        log(f"Intento de login en ADSL #{intento + 1}")
-        if hacer_clic_en_imagen("imagenes/usuario_adsl.png", "Seleccionar usuario ADSL", tiempo_espera=5):
-            pyautogui.press('down')  # Seleccionar el usuario guardado con autocompletado
-            pyautogui.press('enter') # Presionar enter para que se llenen los campos con la info guardada
-            pyautogui.press('enter') # Presionar enter para iniciar sesion
-            login_adsl_exitoso = True
-            log("Login en ADSL con autocompletado exitoso.")
-            break # Salir del bucle si se tuvo éxito
-        else:
-            log("No se encontró la imagen del usuario ADSL en este intento.")
-            time.sleep(2) # Esperar 2 segundos antes de reintentar
+        log("Bloc de notas ya está abierto.")
 
-    if not login_adsl_exitoso:
-        log("No se pudo iniciar sesión en ADSL con autocompletado después de varios intentos. El script continuará, asumiendo que no es necesario o ya se inició sesión.")
-    
-    ################# Abrir Google Chrome para OUTLOOK ######################
-    pyautogui.hotkey('win')  # Abrir el menú de inicio
-    pyautogui.write('Google Chrome') # Abrir google chrome
-    pyautogui.press('enter')
-    time.sleep(2)  # Esperar a que Chrome abra
-    pyautogui.write('https://outlook.live.com/mail/0/') # Abrir outlook
-    pyautogui.press('enter')
-    
-    # Asegurar que todas las ventanas están enfocadas en el orden correcto
-    log("Asegurando el foco de las ventanas...")
-    asegurar_foco_ventana("Bloc de notas")
-    asegurar_foco_ventana("Gestion ADSL")
-    asegurar_foco_ventana("Correo:")
+    if not ventana_existe("Gestion ADSL"):
+        abrir_adsl()
+    else:
+        log("Ventana de Gestion ADSL ya está abierta.")
+
+    if not ventana_existe("Correo:"):
+        abrir_outlook()
+    else:
+        log("Ventana de Correo (Outlook) ya está abierta.")
+
+    log("Paso 2: Asegurando el foco de las ventanas en el orden correcto...")
+    ventanas_a_enfocar = ["Bloc de notas", "Gestion ADSL", "Correo:"]
+    for titulo in ventanas_a_enfocar:
+        if not asegurar_foco_ventana(titulo):
+            limpiar_estado_o_cerrar(f"Error CRÍTICO: No se pudo enfocar la ventana '{titulo}' después de la verificación.")
     log("Foco de ventanas asegurado. Iniciando el procesamiento de correos.")
+    return True
 
+def procesar_correos():
+    """Bucle principal para procesar los correos uno por uno."""
     intentos_max = 5
-    intentos = 0
     correos_procesados = 0
 
-    for i in range(10):
-        log(f"Repetición #{i + 1} para procesar el correo...")
-        
-        while intentos < intentos_max:
+    # Bucle para procesar un número máximo de correos (ej. 20) para evitar ciclos infinitos.
+    for _ in range(20):
+        log(f"Iniciando ciclo de procesamiento de correo...")
+        intentos = 0
+        correo_procesado_exitosamente = False
+        while intentos < intentos_max and not correo_procesado_exitosamente:
             intentos += 1
             log(f"Intento #{intentos} para procesar correo...")
 
@@ -634,7 +629,7 @@ def main():
             validar_y_ordenar_correos_por_fecha()
             time.sleep(2)
 
-
+            # --- Clics con coordenadas relativas para seleccionar el correo. Son frágiles a cambios de resolución o layout. ---
             # Clics para seleccionar el correo.
             x = pyautogui.size().width // 2 - 419
             y = pyautogui.size().height // 2 - 107
@@ -678,17 +673,17 @@ def main():
                 mostrar_ventana_exito(correos_procesados)
 
                 # Terminar el flujo si no hay más correos que revisar
-                return
+                return # Finaliza la función de procesamiento
 
             elif texto_del_correo:
                 contrato_id, telefono_encontrado = buscar_id_en_texto(texto_del_correo)
-                
+
                 if contrato_id:
                     log(f"Contrato encontrado: {contrato_id}")
                     copiar_id_a_portapapeles(contrato_id)
                     if realizar_acciones_teclado(contrato_id):
                         correos_procesados += 1
-                        break
+                        correo_procesado_exitosamente = True
                 elif telefono_encontrado:
                     log(f"Teléfono encontrado: {telefono_encontrado}")
                     pyperclip.copy(telefono_encontrado)
@@ -697,28 +692,28 @@ def main():
                     pyautogui.hotkey('ctrl', 'v')
                     pyautogui.press('enter')
                     asegurar_foco_ventana("Correo:")
-                    
+
                     correos_procesados += 1
-                    break
+                    correo_procesado_exitosamente = True
                 else:
                     log("Ni NÚMERO DE CONTRATO ni TELÉFONO encontrados. Reintentando...")
             else:
                 log("Texto copiado está vacío. Reintentando...")
-        
-        if not (contrato_id or telefono_encontrado) and intentos >= intentos_max:
+
+        # Si se agotaron los intentos para un correo y no se procesó, finalizar.
+        if not correo_procesado_exitosamente:
             log("No se encontró NÚMERO DE CONTRATO ni TELÉFONO después de múltiples intentos. Finalizando el proceso.")
             mostrar_ventana_exito(correos_procesados)
             return
-        elif not (contrato_id or telefono_encontrado):
-            pass
 
-        intentos = 0
-        contrato_id = None
-        telefono_encontrado = None
-
-    log("Todos los correos han sido procesados. Mostrando ventana de éxito.")
+    log("Se ha alcanzado el límite de correos a procesar en una ejecución. Finalizando.")
     mostrar_ventana_exito(correos_procesados)
+
+def main():
+    if preparar_entorno():
+        procesar_correos()
+
 if __name__ == "__main__":
     main()
-
-############################ AHORA VALAIDA SI ESTA INICIADA LA SESSION, SE OMITE LA INICIADA, SINO LA INICIA    #########################################################
+    
+############################  El copdigo es mucho mas robusto, mejor definicion del main, para su mejor comprension y manipulacion y eliminacion de variables, importaciones y definician de funciones obsoletas y sin uso   #########################################################
