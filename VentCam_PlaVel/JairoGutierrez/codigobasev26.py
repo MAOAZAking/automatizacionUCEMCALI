@@ -542,7 +542,7 @@ def abrir_adsl():
             log("No se encontró la imagen del usuario ADSL en este intento.")
             time.sleep(2)
     if not login_adsl_exitoso:
-        log("No se pudo iniciar sesión en ADSL con autocompletado. Asumiendo que ya se inició sesión o no es necesario.")
+        log("No se pudo iniciar sesión en ADSL, se necesita que el operador inice sesión manualmente.")
 
 def abrir_outlook():
     """Abre Chrome y navega a Outlook."""
@@ -597,6 +597,24 @@ def preparar_entorno():
     else:
         log("Ventana de Correo (Outlook) ya está abierta.")
         
+    log("Paso 2: Validar si la session de ADSL está iniciada...")
+    asegurar_foco_ventana("Gestion ADSL")
+    if not hacer_clic_en_imagen("imagenes/mostrar_menu_para_seleccionar_consultas.png", "Valida si aparece el menú de gestion que indica que la session ya etsa iniciada", tiempo_espera=5):
+        # Reintentar el login de ADSL
+        login_adsl_exitoso = False
+        for intento_login in range(3):
+            log(f"Intento de login en ADSL #{intento_login + 1}")
+            if hacer_clic_en_imagen("imagenes/usuario_adsl.png", "Seleccionar usuario ADSL", tiempo_espera=7):
+                pyautogui.press('down'); pyautogui.press('enter'); pyautogui.press('enter')
+                login_adsl_exitoso = True
+                log("Login en ADSL con autocompletado exitoso.")
+                break
+            else:
+                log("No se encontró la imagen del usuario ADSL en este intento.")
+                time.sleep(2)
+        if not login_adsl_exitoso:
+            log("No se pudo iniciar sesión en ADSL, se necesita que el operador inice sesión manualmente.")
+            mostrar_alerta_y_terminar("No se pudo iniciar sesión en ADSL automáticamente. Por favor, inicie sesión manualmente.")
 
     log("Paso 3: Asegurando el foco de las ventanas en el orden correcto...")
     ventanas_a_enfocar = ["Bloc de notas", "Gestion ADSL", "Correo:"]
@@ -717,4 +735,4 @@ def main():
 if __name__ == "__main__":
     main()
     
-############################  El copdigo es mucho mas robusto, mejor definicion del main, para su mejor comprension y manipulacion y eliminacion de variables, importaciones y definician de funciones obsoletas y sin uso   #########################################################
+############################  Se corrigio la forma de validar las ventanas e iniciar session en el aplicativo corporativo   #########################################################
