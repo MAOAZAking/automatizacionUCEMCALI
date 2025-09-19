@@ -388,6 +388,7 @@ def eliminar_anuncios():
     log("Iniciando bucle de eliminación de anuncios...")
     intentos_fallidos_anuncio = 0
     while True:
+        # Buscar cualquier anuncio
         anuncio_encontrado = hacer_clic_en_imagen(
             "imagenes/anuncio.png", 
             "Anuncio en correo", 
@@ -396,20 +397,53 @@ def eliminar_anuncios():
             tolerancia=0.85
         )
         
-        if anuncio_encontrado:
-            log("Anuncio encontrado, intentando eliminarlo.")
+        if anuncio_encontrado: # anuncio_encontrado ahora es una tupla (x, y)
+            log(f"Anuncio general encontrado en {anuncio_encontrado}. Verificando si es un anuncio a omitir.")
             intentos_fallidos_anuncio = 0  # Reiniciar contador de fallos porque encontramos uno
             
-            if hacer_clic_en_imagen(
-                "imagenes/eliminar.png", 
-                "Botón para eliminar anuncio", 
-                tiempo_espera=2, 
-                tolerancia=0.85
-            ):
-                log("Anuncio eliminado. Buscando más anuncios...")
-                time.sleep(2)  # Esperar a que la UI se actualice
+            # Definir la región de búsqueda alrededor del anuncio encontrado
+            center_x, center_y = anuncio_encontrado
+            radius = 200
+            screen_width, screen_height = pyautogui.size()
+
+            left = max(0, center_x - radius)
+            top = max(0, center_y - radius)
+            right = min(screen_width, center_x + radius)
+            bottom = min(screen_height, center_y + radius)
+
+            search_region = (left, top, right - left, bottom - top)
+
+            # Buscar el anuncio específico a omitir dentro de la región
+            anuncio_omitir_encontrado = hacer_clic_en_imagen(
+                "imagenes/anuncio_que_se_omite.png",
+                "Anuncio a omitir",
+                tiempo_espera=1, # Menor tiempo de espera ya que es una búsqueda localizada
+                region=search_region,
+                click=False,
+                tolerancia=0.85,
+                move=False
+            )
+
+            if anuncio_omitir_encontrado:
+                log("Anuncio a omitir encontrado. Saltando eliminación de este anuncio.")
+                # Mover el mouse a la posición del anuncio general para que el usuario vea qué se omitió
+                pyautogui.moveTo(anuncio_encontrado[0], anuncio_encontrado[1], duration=0.2)
+                time.sleep(1) # Pequeña pausa para que el usuario lo vea
+                continue # Pasar al siguiente ciclo del bucle para buscar más anuncios
             else:
-                log("No se encontró el botón para eliminar el anuncio. Se continuará buscando más anuncios.")
+                log("Anuncio general encontrado, y no es un anuncio a omitir. Intentando eliminarlo.")
+                # Mover el mouse a la posición del anuncio general antes de buscar el botón de eliminar
+                pyautogui.moveTo(anuncio_encontrado[0], anuncio_encontrado[1], duration=0.2)
+                if hacer_clic_en_imagen(
+                    "imagenes/eliminar.png",
+                    "Botón para eliminar anuncio",
+                    tiempo_espera=2,
+                    tolerancia=0.85
+                ):
+                    log("Anuncio eliminado. Buscando más anuncios...")
+                    time.sleep(2)  # Esperar a que la UI se actualice
+                else:
+                    log("No se encontró el botón para eliminar el anuncio. Se continuará buscando más anuncios.")
         else:
             intentos_fallidos_anuncio += 1
             log(f"No se encontraron anuncios en esta pasada. Intento de fallo #{intentos_fallidos_anuncio}.")
@@ -600,6 +634,7 @@ def preparar_entorno():
     """
     if not validar_imagenes([
         "imagenes/anuncio.png",
+        "imagenes/anuncio_que_se_omite.png", # Nuevo: imagen para anuncios a omitir
         "imagenes/eliminar.png",
         "imagenes/buscar.png",
         "imagenes/cambiar_orden_de_correos_por_fecha.png",
@@ -847,4 +882,4 @@ def escribir_texto_especial(texto):
             # Para caracteres normales, usamos el método original que es más rápido.
             pyautogui.write(caracter)
 
-############################  Se modificaron los nombres de los archivos, para su mejor manejo y comprension del codigo, dejando un estandar en su forma de separacion con _ y en lugar de sentrarse en una solaccion se le da le nombre de la imagen ya sea sin seleccionar o seleccionnada    #########################################################
+############################  o    #########################################################
