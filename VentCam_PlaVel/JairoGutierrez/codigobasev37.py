@@ -847,4 +847,4 @@ def escribir_texto_especial(texto):
             # Para caracteres normales, usamos el método original que es más rápido.
             pyautogui.write(caracter)
 
-############################  Se integro una funcion que le da a todo el codigo la capacidad de escribir con tildes, esto esta a disposicion del codigo para entender estos simbolos y poder interactuar con estsos    #########################################################
+############################  Se modificaron los nombres de los archivos, para su mejor manejo y comprension del codigo, dejando un estandar en su forma de separacion con _ y en lugar de sentrarse en una solaccion se le da le nombre de la imagen ya sea sin seleccionar o seleccionnada    #########################################################
