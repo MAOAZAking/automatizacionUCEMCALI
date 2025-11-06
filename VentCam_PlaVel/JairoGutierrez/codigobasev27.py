@@ -399,7 +399,7 @@ def realizar_acciones_teclado(idtexto):
 
         # Lógica para adaptarse al estado de la ventana de Gestión ADSL
         log("Adaptando al estado de la ventana de Gestión ADSL...")
-        if hacer_clic_en_imagen("imagenes/consultas.png", "Botón 'Consultas'"):
+        if hacer_clic_en_imagen("imagenes/consultas_seleccionadas.png", "Botón 'Consultas'"):
             log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
             if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
                 limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
@@ -407,9 +407,9 @@ def realizar_acciones_teclado(idtexto):
             log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
             if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
                 limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
-        elif hacer_clic_en_imagen("imagenes/mostrar_menu_para_Seleccionar_consultas.png", "Botón para mostrar menú"):
+        elif hacer_clic_en_imagen("imagenes/mostrar_menu_para_seleccionar_consultas.png", "Botón para mostrar menú"):
             log("Se hizo clic en el botón de menú. Buscando 'Consultas' ahora.")
-            if not hacer_clic_en_imagen("imagenes/consultas.png", "Botón 'Consultas'"):
+            if not hacer_clic_en_imagen("imagenes/consultas_seleccionadas.png", "Botón 'Consultas'"):
                 limpiar_estado_o_cerrar("No se encontró el botón 'Consultas' después de abrir el menú.")
             elif hacer_clic_en_imagen("imagenes/consultas_sin_seleccionar.png", "Botón 'Consultas sin seleccionar'"):
                 if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
@@ -422,7 +422,7 @@ def realizar_acciones_teclado(idtexto):
 
         # Continuación del flujo normal una vez que el formulario de búsqueda está listo.
         hacer_clic_en_imagen("imagenes/seleccionar_contrato.png", "Seleccionar opción Contrato")
-        hacer_clic_en_imagen("imagenes/valor.png", "Campo de Valor del contrato")
+        hacer_clic_en_imagen("imagenes/valor.png", "Campo de Valor del contrato", tolerancia=0.8)
         pyautogui.hotkey('ctrl', 'v')
 
         hacer_clic_en_imagen("imagenes/buscar.png", "Botón Buscar")
@@ -450,7 +450,12 @@ def realizar_acciones_teclado(idtexto):
         asegurar_foco_ventana("Correo:")
         hacer_clic_en_imagen("imagenes/mover_a.png", "Botón Mover Correo")
         hacer_clic_en_imagen("imagenes/mostrar_todas_las_carpetas.png", "Mostrar todas las carpetas")
-        hacer_clic_en_imagen("imagenes/seleccionar_carpeta_correos_revisados.png", "Seleccionar carpeta de destino")
+        # Lógica para seleccionar la carpeta de correos revisados
+        log("Buscando carpeta de destino 'Correos Revisados'...")
+        if not hacer_clic_en_imagen("imagenes/carpeta_correos_revisados_seleccionada.png", "Carpeta de destino (ya seleccionada)", tolerancia=0.8):
+            log("Carpeta de destino no estaba seleccionada. Buscando versión sin seleccionar...")
+            if not hacer_clic_en_imagen("imagenes/carpeta_correos_revisados_sin_seleccionar.png", "Carpeta de destino (sin seleccionar)", tolerancia=0.8):
+                limpiar_estado_o_cerrar("No se pudo encontrar la carpeta de destino 'Correos Revisados'.")
         
         hacer_clic_en_imagen("imagenes/ver_correos_procesador.png", "Ver correos procesador")
         hacer_clic_en_imagen("imagenes/acomodar_orden_de_correos_segun_bloc_de_notas.png", "Poner orden descendente de correos procesados")
@@ -526,8 +531,8 @@ def abrir_bloc_de_notas():
 def abrir_adsl():
     """Abre Chrome, navega a ADSL e intenta iniciar sesión."""
     log("Abriendo Google Chrome para ADSL...")
-    pyautogui.hotkey('win'); pyautogui.write('Google Chrome'); pyautogui.press('enter'); time.sleep(3); pyautogui.hotkey('win', 'left'); pyautogui.hotkey('win', 'up'); pyautogui.hotkey('win', 'up'); pyautogui.hotkey('ctrl', 'l')
-    pyautogui.write('http://adsl.emcali.net.co/'); pyautogui.press('enter'); time.sleep(5)
+    pyautogui.hotkey('win'); pyautogui.write('Google Chrome'); pyautogui.press('enter'); time.sleep(6); pyautogui.hotkey('win', 'left'); pyautogui.hotkey('win', 'up'); pyautogui.hotkey('win', 'up'); pyautogui.hotkey('ctrl', 'l')
+    pyautogui.write('http://adsl.emcali.net.co/'); pyautogui.press('enter'); time.sleep(6)
 
     # Reintentar el login de ADSL
     login_adsl_exitoso = False
@@ -546,6 +551,7 @@ def abrir_adsl():
 
 def abrir_outlook():
     """Abre Chrome y navega a Outlook."""
+    time.sleep(2)
     log("Abriendo Google Chrome para Outlook...")
     pyautogui.hotkey('win'); pyautogui.write('Google Chrome'); pyautogui.press('enter'); time.sleep(3); pyautogui.hotkey('win', 'left'); pyautogui.hotkey('win', 'up'); pyautogui.hotkey('win', 'up'); pyautogui.hotkey('ctrl', 'l')
     pyautogui.write('https://outlook.live.com/mail/0/'); pyautogui.press('enter'); time.sleep(5)
@@ -629,6 +635,15 @@ def procesar_correos():
     intentos_max = 5
     correos_procesados = 0
 
+    # Asegurar que estamos en la carpeta correcta antes de empezar el bucle
+    asegurar_foco_ventana("Correo:")
+    log("Asegurando que la carpeta 'Correos por revisar' esté seleccionada.")
+    if hacer_clic_en_imagen("imagenes/carpeta_por_revisar_seleccionada.png", "Carpeta 'Correos por revisar' (ya seleccionada)", tiempo_espera=2, tolerancia=0.8):
+        log("Carpeta 'Correos por revisar' ya estaba seleccionada.")
+    elif not hacer_clic_en_imagen("imagenes/carpeta_por_revisar_sin_seleccionar.png", "Carpeta 'Correos por revisar' (sin seleccionar)", tiempo_espera=2, tolerancia=0.8):
+        log("ADVERTENCIA: No se pudo hacer clic en la carpeta 'Correos por revisar'. El script continuará, pero podría estar en la carpeta incorrecta.")
+    time.sleep(2) # Dar tiempo a que la carpeta cargue
+
     # Bucle para procesar un número máximo de correos (ej. 20) para evitar ciclos infinitos.
     for _ in range(20):
         log(f"Iniciando ciclo de procesamiento de correo...")
@@ -669,11 +684,20 @@ def procesar_correos():
                 log("No hay más correos por revisar, cambiando a la carpeta de correos revisados.")
 
                 # Dar clic en la carpeta de "correos revisados"
-                hacer_clic_en_imagen("imagenes/seleccionar_carpeta_correos_revisados.png", "Seleccionar carpeta 'Correos revisados'")
+                log("Buscando carpeta de destino 'Correos Revisados'...")
+                if hacer_clic_en_imagen("imagenes/carpeta_correos_revisados_seleccionada.png", "Carpeta de destino (ya seleccionada)", tolerancia=0.8):
+                    log("Carpeta de 'Correos Revisados' ya estaba seleccionada.")
+                    time.sleep(2)
+                elif hacer_clic_en_imagen("imagenes/carpeta_correos_revisados_sin_seleccionar.png", "Carpeta de destino (sin seleccionar)", tolerancia=0.8):
+                    time.sleep(2) # Esperar a que se carguen los correos revisados
+                else:
+                    log("No se pudo hacer clic en la carpeta de correos revisados.")
+                
 
-                # Esperar a que se carguen los correos revisados
-                time.sleep(1)
-
+                # Validar y ordenar los correos en la carpeta de 'revisados'
+                log("Validando y ordenando correos en la carpeta de 'revisados' de más antiguo a más nuevo.")
+                validar_y_ordenar_correos_por_fecha()
+                time.sleep(2) # Esperar a que se complete el ordenamiento
                 # Seleccionar el correo más arriba
                 x = pyautogui.size().width // 2 - 419
                 y = pyautogui.size().height // 2 - 107

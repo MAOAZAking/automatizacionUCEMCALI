@@ -464,6 +464,7 @@ def realizar_acciones_teclado(idtexto):
         pyautogui.press('enter')
         texto_a_pegar = f"Número de contrato: {idtexto}"
         pyperclip.copy(texto_a_pegar)
+        pyperclip.copy(idtexto)
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('enter')
 
@@ -639,6 +640,7 @@ def preparar_entorno():
         "imagenes/buscar.png",
         "imagenes/cambiar_orden_de_correos_por_fecha.png",
         "imagenes/consultas_seleccionadas.png",
+        "imagenes/consultas.png",
         "imagenes/consultas_sin_seleccionar.png",
         "imagenes/email.png",
         "imagenes/filtrado_de_antiguo_a_reciente.png",
@@ -674,6 +676,7 @@ def preparar_entorno():
         abrir_adsl()
     else:
         log("Ventana de ADSL ya está abierta.")
+        log("Ventana de Gestion ADSL ya está abierta.")
 
     if not ventana_existe("Correo:"):
         abrir_outlook()
@@ -701,6 +704,7 @@ def preparar_entorno():
 
     log("Paso 3: Asegurando el foco de las ventanas en el orden correcto...")
     ventanas_a_enfocar = ["Bloc de notas", "adsl", "Correo:"]
+    ventanas_a_enfocar = ["Bloc de notas", "Gestion ADSL", "Correo:"]
     for titulo in ventanas_a_enfocar:
         if not asegurar_foco_ventana(titulo):
             limpiar_estado_o_cerrar(f"Error CRÍTICO: No se pudo enfocar la ventana '{titulo}' después de la verificación.")

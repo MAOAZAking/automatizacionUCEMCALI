@@ -399,7 +399,7 @@ def realizar_acciones_teclado(idtexto):
 
         # Lógica para adaptarse al estado de la ventana de Gestión ADSL
         log("Adaptando al estado de la ventana de Gestión ADSL...")
-        if hacer_clic_en_imagen("imagenes/consultas.png", "Botón 'Consultas'"):
+        if hacer_clic_en_imagen("imagenes/consultas_seleccionadas.png", "Botón 'Consultas'"):
             log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
             if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
                 limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
@@ -407,9 +407,9 @@ def realizar_acciones_teclado(idtexto):
             log("Se hizo clic en el botón 'Consultas'. Buscando el formulario de búsqueda ahora.")
             if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
                 limpiar_estado_o_cerrar("No se encontró el formulario de búsqueda después de hacer clic en 'Consultas'.")
-        elif hacer_clic_en_imagen("imagenes/mostrar_menu_para_Seleccionar_consultas.png", "Botón para mostrar menú"):
+        elif hacer_clic_en_imagen("imagenes/mostrar_menu_para_seleccionar_consultas.png", "Botón para mostrar menú"):
             log("Se hizo clic en el botón de menú. Buscando 'Consultas' ahora.")
-            if not hacer_clic_en_imagen("imagenes/consultas.png", "Botón 'Consultas'"):
+            if not hacer_clic_en_imagen("imagenes/consultas_seleccionadas.png", "Botón 'Consultas'"):
                 limpiar_estado_o_cerrar("No se encontró el botón 'Consultas' después de abrir el menú.")
             elif hacer_clic_en_imagen("imagenes/consultas_sin_seleccionar.png", "Botón 'Consultas sin seleccionar'"):
                 if not hacer_clic_en_imagen("imagenes/forma_buscar.png", "Formulario de búsqueda"):
@@ -422,7 +422,7 @@ def realizar_acciones_teclado(idtexto):
 
         # Continuación del flujo normal una vez que el formulario de búsqueda está listo.
         hacer_clic_en_imagen("imagenes/seleccionar_contrato.png", "Seleccionar opción Contrato")
-        hacer_clic_en_imagen("imagenes/valor.png", "Campo de Valor del contrato")
+        hacer_clic_en_imagen("imagenes/valor.png", "Campo de Valor del contrato", tolerancia=0.8)
         pyautogui.hotkey('ctrl', 'v')
 
         hacer_clic_en_imagen("imagenes/buscar.png", "Botón Buscar")
@@ -450,7 +450,12 @@ def realizar_acciones_teclado(idtexto):
         asegurar_foco_ventana("Correo:")
         hacer_clic_en_imagen("imagenes/mover_a.png", "Botón Mover Correo")
         hacer_clic_en_imagen("imagenes/mostrar_todas_las_carpetas.png", "Mostrar todas las carpetas")
-        hacer_clic_en_imagen("imagenes/seleccionar_carpeta_correos_revisados.png", "Seleccionar carpeta de destino")
+        # Lógica para seleccionar la carpeta de correos revisados
+        log("Buscando carpeta de destino 'Correos Revisados'...")
+        if not hacer_clic_en_imagen("imagenes/carpeta_correos_revisados_seleccionada.png", "Carpeta de destino (ya seleccionada)", tolerancia=0.8):
+            log("Carpeta de destino no estaba seleccionada. Buscando versión sin seleccionar...")
+            if not hacer_clic_en_imagen("imagenes/carpeta_correos_revisados_sin_seleccionar.png", "Carpeta de destino (sin seleccionar)", tolerancia=0.8):
+                limpiar_estado_o_cerrar("No se pudo encontrar la carpeta de destino 'Correos Revisados'.")
         
         hacer_clic_en_imagen("imagenes/ver_correos_procesador.png", "Ver correos procesador")
         hacer_clic_en_imagen("imagenes/acomodar_orden_de_correos_segun_bloc_de_notas.png", "Poner orden descendente de correos procesados")
@@ -555,9 +560,12 @@ def preparar_entorno():
     Función principal que ejecuta el flujo de automatización.
     """
     if not validar_imagenes([
+        "imagenes/anuncio.png",
+        "imagenes/anuncio_que_se_omite.png", # Nuevo: imagen para anuncios a omitir
+        "imagenes/eliminar.png",
         "imagenes/buscar.png",
         "imagenes/cambiar_orden_de_correos_por_fecha.png",
-        "imagenes/consultas.png",
+        "imagenes/consultas_seleccionadas.png",
         "imagenes/consultas_sin_seleccionar.png",
         "imagenes/email.png",
         "imagenes/filtrado_de_antiguo_a_reciente.png",
@@ -570,8 +578,10 @@ def preparar_entorno():
         "imagenes/nombre.png",
         "imagenes/numero_contacto.png",
         "imagenes/organizar_correos_del_mas_antiguo_al_mas_nuevo.png",
-        "imagenes/seleccionar_carpeta_correos_revisados.png",
-        "imagenes/seleccionar_carpeta_por_revisar.png",
+        "imagenes/carpeta_correos_revisados_seleccionada.png",
+        "imagenes/carpeta_correos_revisados_sin_seleccionar.png",
+        "imagenes/carpeta_por_revisar_seleccionada.png",
+        "imagenes/carpeta_por_revisar_sin_seleccionar.png",
         "imagenes/seleccionar_contrato.png",
         "imagenes/seleccionar_contrato_activo.png",
         "imagenes/tipo_cliente.png",
@@ -669,15 +679,14 @@ def procesar_correos():
                 log("No hay más correos por revisar, cambiando a la carpeta de correos revisados.")
 
                 # Dar clic en la carpeta de "correos revisados"
-                hacer_clic_en_imagen("imagenes/seleccionar_carpeta_correos_revisados.png", "Seleccionar carpeta 'Correos revisados'")
-
-                # Esperar a que se carguen los correos revisados
-                time.sleep(1)
-
-                # Seleccionar el correo más arriba
-                x = pyautogui.size().width // 2 - 419
-                y = pyautogui.size().height // 2 - 107
-                pyautogui.click(x, y)
+                log("Buscando carpeta de destino 'Correos Revisados'...")
+                if hacer_clic_en_imagen("imagenes/carpeta_correos_revisados_seleccionada.png", "Carpeta de destino (ya seleccionada)", tolerancia=0.8):
+                    log("Carpeta de 'Correos Revisados' ya estaba seleccionada.")
+                    time.sleep(2)
+                elif hacer_clic_en_imagen("imagenes/carpeta_correos_revisados_sin_seleccionar.png", "Carpeta de destino (sin seleccionar)", tolerancia=0.8):
+                    time.sleep(2) # Esperar a que se carguen los correos revisados
+                else:
+                    log("No se pudo hacer clic en la carpeta de correos revisados.")
 
                 # Dar clic en la imagen para cambiar el orden de los correos por fecha
                 hacer_clic_en_imagen("imagenes/cambiar_orden_de_correos_por_fecha.png", "Cambiar orden de correos por fecha")
@@ -685,8 +694,17 @@ def procesar_correos():
                 # Dar clic en la imagen para organizar los correos del más antiguo al más nuevo
                 hacer_clic_en_imagen("imagenes/organizar_correos_del_mas_antiguo_al_mas_nuevo.png", "Organizar correos del más antiguo al más nuevo")
 
+                # Validar y ordenar los correos en la carpeta de 'revisados'
+                log("Validando y ordenando correos en la carpeta de 'revisados' de más antiguo a más nuevo.")
+                validar_y_ordenar_correos_por_fecha()
                 # Esperar 2 segundos para que se organicen los correos
                 time.sleep(2)
+
+                # Seleccionar el correo más arriba
+                x = pyautogui.size().width // 2 - 419
+                y = pyautogui.size().height // 2 - 107
+                pyautogui.click(x, y)
+
 
                 # Mostrar el mensaje de que todos los correos han sido procesados
                 mostrar_ventana_exito(correos_procesados)

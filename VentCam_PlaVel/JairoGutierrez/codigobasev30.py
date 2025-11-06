@@ -767,4 +767,4 @@ def main():
 if __name__ == "__main__":
     main()
     
-############################  Se aplico la misma funcion de aliminar anuncios cuando cambia de carpetas en el correo outlook (en correos por revisar y correos revisados)   #########################################################
+############################  Se aplico la misma funcion de eliminar anuncios cuando cambia de carpetas en el correo outlook (en correos por revisar y correos revisados)   #########################################################
